@@ -25,6 +25,8 @@
 */
 
 #include "Helpers.h"
+#include "WiFi.h"
+#include "WiFiConfig.h"
 
 // Define constants for ESP32 core numbers.
 #define ESP32_CORE_PRIMARY 0    // Numeric value representing the primary core.
@@ -32,6 +34,7 @@
 
 // Enum to represent different device statuses
 enum DeviceStatusEnum : byte {
+  NONE,             // Disable RGB led.
   NOT_READY,        // Device is not ready.
   READY_TO_SEND,    // Device is ready to send data.
   WAITING_GNSS,     // Device is waiting for GNSS data.
@@ -39,13 +42,18 @@ enum DeviceStatusEnum : byte {
 };
 
 // Variable to store the current device status.
-DeviceStatusEnum deviceStatus = NOT_READY;  // Initial state is set to NOT_READY.
+DeviceStatusEnum deviceStatus = NONE;  // Initial state is set to NOT_READY.
 
 // Function prototype for the DeviceStatusThread function.
 void DeviceStatusThread(void* pvParameters);
 
 // Define the pin for the configuration button.
 int configurationButton = D2;
+
+String configNetworkName = "SMAF-DK-SAP-CONFIG";
+String configNetworkPass = "Kurwe01!";
+uint16_t configServerPort = 80;
+WiFiConfig config(configNetworkName, configNetworkPass, configServerPort);
 
 /**
 * @brief Initializes the SMAF-Development-Kit and runs once at the beginning.
@@ -64,7 +72,7 @@ void setup() {
   digitalWrite(LED_GREEN, !LOW);
   digitalWrite(LED_BLUE, !LOW);
 
-  // Set the pin mode for the configuration button to INPUT-
+  // Set the pin mode for the configuration button to INPUT.
   pinMode(configurationButton, INPUT);
 
   // Delay for 2400 milliseconds (2.4 seconds).
@@ -86,9 +94,43 @@ void setup() {
     ESP32_CORE_PRIMARY     // Core where the task should run.
   );
 
-  if (digitalRead(configurationButton) == HIGH) {
+  // Set preferences namespace.
+  String preferencesNamespace = "SMAF-DK";
+  debug(CMD, "Setting preferences namespace to '" + preferencesNamespace + "'.");
+  config.setPreferencesNamespace(preferencesNamespace);
+  debug(SCS, "Preferences namespace set to'" + config.getPreferencesNamespace() + "'.");
+
+  // Clear all preferences in namespace.
+  // config.clearPreferencesInNamespace(config.getPreferencesNamespace());
+
+  // Load Wi-Fi and MQTT configuration preferences.
+  debug(CMD, "Loading preferences from '" + config.getPreferencesNamespace() + "' namespace.");
+  config.loadPreferences();
+
+  // Log preferences information.
+  debug(LOG, "Network Name: '" + config.getNetworkName() + "'.");
+  debug(LOG, "Network Password: '" + config.getNetworkPass() + "'.");
+  debug(LOG, "MQTT Server address: '" + config.getMqttServerAddress() + "'.");
+  debug(LOG, "MQTT Server port: '" + String(config.getMqttServerPort()) + "'.");
+  debug(LOG, "MQTT Username: '" + config.getMqttUsername() + "'.");
+  debug(LOG, "MQTT Password: '" + config.getMqttPass() + "'.");
+  debug(LOG, "MQTT Client ID: '" + config.getMqttClientId() + "'.");
+  debug(LOG, "MQTT Topic: '" + config.getMqttTopic() + "'.");
+
+  // Check if configuration preferences are valid and log the result.
+  (!config.isConfigValid()) ? debug(ERR, "Preferences not valid.") : debug(SCS, "Preferences are valid.");
+
+  // Check if SoftAP configuration server should be started.
+  if ((digitalRead(configurationButton) == HIGH) || (!config.isConfigValid())) {
+    // Set device status to Maintenance Mode.
     deviceStatus = MAINTENANCE_MODE;
+
+    // Log information about starting SoftAP configuration server.
+    debug(CMD, "Starting the SoftAP configuration server either because it was initiated by the user or the configuration was incomplete.");
+    config.startConfig();
+    debug(SCS, "SoftAP configuration server started.");
   } else {
+    // Set device status to Not Ready.
     deviceStatus = NOT_READY;
   }
 }
@@ -102,8 +144,12 @@ void setup() {
 *
 */
 void loop() {
-  debug(SCS, "Hello world!");
-  delay(800);
+  if (deviceStatus == MAINTENANCE_MODE) {
+    config.renderConfigPage();
+  } else {
+    debug(LOG, "Hello world.");
+    delay(800);
+  }
 }
 
 /**
@@ -123,6 +169,13 @@ void DeviceStatusThread(void* pvParameters) {
 
     // Handle different device statuses.
     switch (deviceStatus) {
+      case NONE:
+        // Disable RGB led.
+        digitalWrite(LED_RED, !LOW);
+        digitalWrite(LED_GREEN, !LOW);
+        digitalWrite(LED_BLUE, !LOW);
+        break;
+
       case NOT_READY:
         // Blink the red LED to indicate the device is not ready.
         digitalWrite(LED_RED, !HIGH);
@@ -140,6 +193,7 @@ void DeviceStatusThread(void* pvParameters) {
           delay(40);
         }
 
+        // Additional delay after blinking for visibility.
         delay(1200);
         break;
 

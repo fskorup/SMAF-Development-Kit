@@ -3,7 +3,6 @@
 * @brief Implementation of helper functions for Arduino project.
 *
 * This file contains the implementation of helper functions used in the Arduino project.
-* The project is designed for [Briefly describe your project here].
 *
 * @license MIT License
 *
@@ -29,7 +28,7 @@
 #include "Arduino.h"
 #include "Helpers.h"
 
-MessageTypeEnum messageType = CLR;  // Define the variable.
+MessageTypeEnum messageType = LOG;  // Define the variable.
 
 /**
 * @brief Debugging function to print messages with different types.
@@ -45,8 +44,8 @@ void debug(byte messageType, String message) {
 
   // Switch statement to determine the message type string based on the input byte
   switch (messageType) {
-    case CLR:
-      messageTypeStr = String();  // For CLR, no message type string is added.
+    case LOG:
+      messageTypeStr = "LOG";  // For LOG, set the message type string to "LOG".
       break;
 
     case ERR:

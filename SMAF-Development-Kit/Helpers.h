@@ -3,7 +3,6 @@
 * @brief Declaration of helper functions for Arduino project.
 *
 * This file contains the declarations of helper functions used in the Arduino project.
-* The project is designed for [Briefly describe your project here].
 *
 * @license MIT License
 *
@@ -38,7 +37,7 @@
 * This enumeration defines different message types for logging purposes.
 */
 enum MessageTypeEnum : byte {
-  CLR,  // Clear type. No type displayed.
+  LOG,  // Info type. INFO message type displayed.
   ERR,  // Error type. ERROR message type displayed.
   SCS,  // Success type. OK message type displayed.
   CMD   // Command type. CMD message type displayed.
