@@ -52,7 +52,7 @@ int configurationButton = D2;
 
 String configNetworkName = "SMAF-DK-SAP-CONFIG";
 String configNetworkPass = "Kurwe01!";
-uint16_t configServerPort = 80;
+uint16_t configServerPort = 8080;
 WiFiConfig config(configNetworkName, configNetworkPass, configServerPort);
 
 /**

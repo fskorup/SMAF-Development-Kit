@@ -203,7 +203,6 @@ private:
   // SoftAP SSID name and password.
   String _configNetworkName;   // Name of the SoftAP (Access Point).
   String _configNetworkPass;   // Password for the SoftAP.
-  uint16_t _configServerPort;  // Port for the SoftAP configuration server.
 
   // Preferences namespace.
   String _preferencesNamespace;

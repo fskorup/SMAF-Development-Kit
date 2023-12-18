@@ -44,8 +44,7 @@
 WiFiConfig::WiFiConfig(String configNetworkName, String configNetworkPass, uint16_t configServerPort)
   : _configNetworkName(configNetworkName),
     _configNetworkPass(configNetworkPass),
-    _configServerPort(configServerPort),
-    _configServerInstance(80) {
+    _configServerInstance(configServerPort) {
   // Constructor implementation goes here
 }
 
