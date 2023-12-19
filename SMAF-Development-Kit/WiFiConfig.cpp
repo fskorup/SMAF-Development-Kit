@@ -44,6 +44,7 @@
 WiFiConfig::WiFiConfig(String configNetworkName, String configNetworkPass, uint16_t configServerPort)
   : _configNetworkName(configNetworkName),
     _configNetworkPass(configNetworkPass),
+    _configServerPort(configServerPort),
     _configServerInstance(configServerPort) {
   // Constructor implementation goes here
 }
@@ -56,7 +57,7 @@ WiFiConfig::WiFiConfig(String configNetworkName, String configNetworkPass, uint1
 * for SoftAP initialization and then begins the SoftAP configuration server instance.
 *
 * @note Ensure that the SoftAP configuration server instance has been initialized
-* before calling this method.
+*       before calling this method.
 */
 void WiFiConfig::startConfig() {
   // Start SoftAP with the specified network name and password.
@@ -67,6 +68,48 @@ void WiFiConfig::startConfig() {
 
   // Begin the configuration server instance.
   _configServerInstance.begin();
+
+  // Get the SoftAP IP address.
+  _configServerIP = String(WiFi.softAPIP().toString());
+}
+
+/**
+* @brief Get the configured network name for SoftAP.
+* 
+* @return String representing the configured network name.
+*         If empty, returns "NULL".
+*/
+String WiFiConfig::getConfigNetworkName() {
+  return _configNetworkName.isEmpty() ? "NULL" : _configNetworkName;
+}
+
+/**
+* @brief Get the configured network password for SoftAP.
+* 
+* @return String representing the configured network password.
+*         If empty, returns "NULL".
+*/
+String WiFiConfig::getConfigNetworkPass() {
+  return _configNetworkPass.isEmpty() ? "NULL" : _configNetworkPass;
+}
+
+/**
+* @brief Get the IP address of the SoftAP.
+* 
+* @return String representing the IP address of the SoftAP.
+*         If empty, returns "NULL".
+*/
+String WiFiConfig::getConfigServerIP() {
+  return _configServerIP.isEmpty() ? "NULL" : _configServerIP;
+}
+
+/**
+* @brief Get the configured configuration server port.
+* 
+* @return uint16_t representing the configuration server port.
+*/
+uint16_t WiFiConfig::getConfigServerPort() {
+  return _configServerPort;
 }
 
 /**
@@ -266,8 +309,8 @@ void WiFiConfig::loadPreferences() {
 * address, port, username, password, client ID, and topic for future use.
 *
 * @note The Preferences library is used to store and retrieve non-volatile data.
-* Uncommenting the ESP.restart() line will restart the device after saving preferences,
-* useful if a restart is desired after configuration changes.
+*       Uncommenting the ESP.restart() line will restart the device after saving preferences,
+*       useful if a restart is desired after configuration changes.
 */
 void WiFiConfig::savePreferences() {
   // Create a Preferences instance with the specified namespace.
@@ -329,72 +372,80 @@ bool WiFiConfig::isConfigValid() {
 }
 
 /**
-* @brief Get the preferences namespace name.
-*
-* @return The preferences namespace name.
+* @brief Get the configured preferences namespace.
+* 
+* @return String representing the configured preferences namespace.
+*         If empty, returns "NULL".
 */
 String WiFiConfig::getPreferencesNamespace() {
   return _preferencesNamespace.isEmpty() ? "NULL" : _preferencesNamespace;
 }
 
 /**
-* @brief Get the Wi-Fi network name.
-*
-* @return The Wi-Fi network name.
+* @brief Get the configured Wi-Fi network name.
+* 
+* @return String representing the Wi-Fi network name.
+*         If empty, returns "NULL".
 */
 String WiFiConfig::getNetworkName() {
   return _networkName.isEmpty() ? "NULL" : _networkName;
 }
 
 /**
-* @brief Get the Wi-Fi network password.
-*
-* @return The Wi-Fi network password.
+* @brief Get the configured Wi-Fi network password.
+* 
+* @return String representing the Wi-Fi network password.
+*         If empty, returns "NULL".
 */
 String WiFiConfig::getNetworkPass() {
   return _networkPass.isEmpty() ? "NULL" : _networkPass;
 }
 
 /**
-* @brief Get the MQTT server address.
-*
-* @return The MQTT server address.
+* @brief Get the configured MQTT server address.
+* 
+* @return String representing the MQTT server address.
+*         If empty, returns "NULL".
 */
 String WiFiConfig::getMqttServerAddress() {
   return _mqttServerAddress.isEmpty() ? "NULL" : _mqttServerAddress;
 }
 
 /**
-* @brief Get the MQTT username.
-*
-* @return The MQTT username.
+* @brief Get the configured MQTT username.
+* 
+* @return String representing the MQTT username.
+*         If empty, returns "NULL".
 */
 String WiFiConfig::getMqttUsername() {
   return _mqttUsername.isEmpty() ? "NULL" : _mqttUsername;
 }
 
 /**
-* @brief Get the MQTT password.
-*
-* @return The MQTT password.
+* @brief Get the configured MQTT password.
+* 
+* @return String representing the MQTT password.
+*         If empty, returns "NULL".
 */
 String WiFiConfig::getMqttPass() {
   return _mqttPass.isEmpty() ? "NULL" : _mqttPass;
 }
 
 /**
-* @brief Get the MQTT client ID.
-*
-* @return The MQTT client ID.
+* @brief Get the configured MQTT client ID.
+* 
+* @return String representing the MQTT client ID.
+*         If empty, returns "NULL".
 */
 String WiFiConfig::getMqttClientId() {
   return _mqttClientId.isEmpty() ? "NULL" : _mqttClientId;
 }
 
 /**
-* @brief Get the MQTT topic.
-*
-* @return The MQTT topic.
+* @brief Get the configured MQTT topic.
+* 
+* @return String representing the MQTT topic.
+*         If empty, returns "NULL".
 */
 String WiFiConfig::getMqttTopic() {
   return _mqttTopic.isEmpty() ? "NULL" : _mqttTopic;

@@ -1,4 +1,3 @@
-#include "WString.h"
 /**
 * @file WiFiConfig.h
 * @brief Declaration of WiFiConfig functions for SoftAP configurator.
@@ -68,9 +67,40 @@ public:
   * for SoftAP initialization and then begins the SoftAP configuration server instance.
   *
   * @note Ensure that the SoftAP configuration server instance has been initialized
-  * before calling this method.
+  *       before calling this method.
   */
   void startConfig();
+
+  /**
+  * @brief Get the configured network name for SoftAP.
+  * 
+  * @return String representing the configured network name.
+  *         If empty, returns "NULL".
+  */
+  String getConfigNetworkName();
+
+  /**
+  * @brief Get the configured network password for SoftAP.
+  * 
+  * @return String representing the configured network password.
+  *         If empty, returns "NULL".
+  */
+  String getConfigNetworkPass();
+
+  /**
+  * @brief Get the IP address of the SoftAP.
+  * 
+  * @return String representing the IP address of the SoftAP.
+  *         If empty, returns "NULL".
+  */
+  String getConfigServerIP();
+
+  /**
+  * @brief Get the configured configuration server port.
+  * 
+  * @return uint16_t representing the configuration server port.
+  */
+  uint16_t getConfigServerPort();
 
   /**
   * @brief Render the configuration page for device setup.
@@ -111,8 +141,8 @@ public:
   * address, port, username, password, client ID, and topic for future use.
   *
   * @note The Preferences library is used to store and retrieve non-volatile data.
-  * Uncommenting the ESP.restart() line will restart the device after saving preferences,
-  * useful if a restart is desired after configuration changes.
+  *       Uncommenting the ESP.restart() line will restart the device after saving preferences,
+  *       useful if a restart is desired after configuration changes.
   */
   void savePreferences();
 
@@ -134,58 +164,66 @@ public:
   bool isConfigValid();
 
   /**
-  * @brief Get the preferences namespace name.
-  *
-  * @return The preferences namespace name.
+  * @brief Get the configured preferences namespace.
+  * 
+  * @return String representing the configured preferences namespace.
+  *         If empty, returns "NULL".
   */
   String getPreferencesNamespace();
 
   /**
-  * @brief Get the Wi-Fi network name.
-  *
-  * @return The Wi-Fi network name.
+  * @brief Get the configured Wi-Fi network name.
+  * 
+  * @return String representing the Wi-Fi network name.
+  *         If empty, returns "NULL".
   */
   String getNetworkName();
 
   /**
-  * @brief Get the Wi-Fi network password.
-  *
-  * @return The Wi-Fi network password.
+  * @brief Get the configured Wi-Fi network password.
+  * 
+  * @return String representing the Wi-Fi network password.
+  *         If empty, returns "NULL".
   */
   String getNetworkPass();
 
   /**
-  * @brief Get the MQTT server address.
-  *
-  * @return The MQTT server address.
+  * @brief Get the configured MQTT server address.
+  * 
+  * @return String representing the MQTT server address.
+  *         If empty, returns "NULL".
   */
   String getMqttServerAddress();
 
   /**
-  * @brief Get the MQTT username.
-  *
-  * @return The MQTT username.
+  * @brief Get the configured MQTT username.
+  * 
+  * @return String representing the MQTT username.
+  *         If empty, returns "NULL".
   */
   String getMqttUsername();
 
   /**
-  * @brief Get the MQTT password.
-  *
-  * @return The MQTT password.
+  * @brief Get the configured MQTT password.
+  * 
+  * @return String representing the MQTT password.
+  *         If empty, returns "NULL".
   */
   String getMqttPass();
 
   /**
-  * @brief Get the MQTT client ID.
-  *
-  * @return The MQTT client ID.
+  * @brief Get the configured MQTT client ID.
+  * 
+  * @return String representing the MQTT client ID.
+  *         If empty, returns "NULL".
   */
   String getMqttClientId();
 
   /**
-  * @brief Get the MQTT topic.
-  *
-  * @return The MQTT topic.
+  * @brief Get the configured MQTT topic.
+  * 
+  * @return String representing the MQTT topic.
+  *         If empty, returns "NULL".
   */
   String getMqttTopic();
 
@@ -200,22 +238,24 @@ private:
   // Server instance for handling SoftAP configuration.
   WiFiServer _configServerInstance;
 
-  // SoftAP SSID name and password.
-  String _configNetworkName;   // Name of the SoftAP (Access Point).
-  String _configNetworkPass;   // Password for the SoftAP.
+  // SoftAP SSID name, password, port and IP.
+  String _configNetworkName;       // Name of the SoftAP (Access Point).
+  String _configNetworkPass;       // Password for the SoftAP.
+  String _configServerIP;          // IP of the SoftAP.
+  uint16_t _configServerPort = 0;  // Port for the SoftAP.
 
   // Preferences namespace.
   String _preferencesNamespace;
 
   // Network and MQTT configuration parameters.
-  String _networkName;        // Wi-Fi network name.
-  String _networkPass;        // Wi-Fi network password.
-  String _mqttServerAddress;  // MQTT server address.
-  String _mqttUsername;       // MQTT username.
-  String _mqttPass;           // MQTT password.
-  String _mqttClientId;       // MQTT client ID.
-  String _mqttTopic;          // MQTT topic.
-  uint16_t _mqttServerPort;   // MQTT server port.
+  String _networkName;           // Wi-Fi network name.
+  String _networkPass;           // Wi-Fi network password.
+  String _mqttServerAddress;     // MQTT server address.
+  String _mqttUsername;          // MQTT username.
+  String _mqttPass;              // MQTT password.
+  String _mqttClientId;          // MQTT client ID.
+  String _mqttTopic;             // MQTT topic.
+  uint16_t _mqttServerPort = 0;  // MQTT server port.
 
   // Flag indicating whether the configuration is valid.
   bool _isConfigValid;

@@ -50,9 +50,13 @@ void DeviceStatusThread(void* pvParameters);
 // Define the pin for the configuration button.
 int configurationButton = D2;
 
+// SoftAP configuration parameters.
 String configNetworkName = "SMAF-DK-SAP-CONFIG";
 String configNetworkPass = "Kurwe01!";
-uint16_t configServerPort = 8080;
+String preferencesNamespace = "SMAF-DK";
+uint16_t configServerPort = 80;
+
+// WiFiConfig instance with the specified configuration.
 WiFiConfig config(configNetworkName, configNetworkPass, configServerPort);
 
 /**
@@ -95,7 +99,6 @@ void setup() {
   );
 
   // Set preferences namespace.
-  String preferencesNamespace = "SMAF-DK";
   debug(CMD, "Setting preferences namespace to '" + preferencesNamespace + "'.");
   config.setPreferencesNamespace(preferencesNamespace);
   debug(SCS, "Preferences namespace set to'" + config.getPreferencesNamespace() + "'.");
@@ -129,6 +132,10 @@ void setup() {
     debug(CMD, "Starting the SoftAP configuration server either because it was initiated by the user or the configuration was incomplete.");
     config.startConfig();
     debug(SCS, "SoftAP configuration server started.");
+    debug(LOG, "SoftAP Name: '" + config.getConfigNetworkName() + "'");
+    debug(LOG, "SoftAP Password: '" + config.getConfigNetworkPass() + "'");
+    debug(LOG, "SoftAP Server IP address: '" + config.getConfigServerIP() + "'");
+    debug(LOG, "SoftAP Server port: '" + String(config.getConfigServerPort()) + "'");
   } else {
     // Set device status to Not Ready.
     deviceStatus = NOT_READY;
@@ -144,12 +151,12 @@ void setup() {
 *
 */
 void loop() {
-  if (deviceStatus == MAINTENANCE_MODE) {
+  while (deviceStatus == MAINTENANCE_MODE) {
     config.renderConfigPage();
-  } else {
-    debug(LOG, "Hello world.");
-    delay(800);
   }
+
+  debug(LOG, "Hello world.");
+  delay(800);
 }
 
 /**
