@@ -27,6 +27,7 @@
 #include "Helpers.h"
 #include "WiFi.h"
 #include "WiFiConfig.h"
+#include "PubSubClient.h"
 #include "DeviceStatusVisualizer.h"
 
 // Define constants for ESP32 core numbers.
@@ -60,6 +61,15 @@ uint16_t configServerPort = 80;
 // WiFiConfig instance with the specified configuration.
 WiFiConfig config(configNetworkName, configNetworkPass, configServerPort);
 
+/**
+* @brief WiFiClient and PubSubClient instances for establishing MQTT communication.
+* 
+* The WiFiClient instance, named wifiClient, is used to manage the Wi-Fi connection.
+* The PubSubClient instance, named mqtt, relies on the WiFiClient for MQTT communication.
+*/
+WiFiClient wifiClient;          // Manages Wi-Fi connection.
+PubSubClient mqtt(wifiClient);  // Uses WiFiClient for MQTT communication.
+
 // Instantiate DeviceStatusVisualizer with RGB LED pins: LED_RED, LED_GREEN, LED_BLUE.
 DeviceStatusVisualizer statusVisualizer(LED_RED, LED_GREEN, LED_BLUE);
 
@@ -82,7 +92,7 @@ void setup() {
   delay(2400);
 
   // Print a formatted welcome message with build information.
-  String buildVersion = "v0.1 (Revision-01)";
+  String buildVersion = "v0.002";
   String buildDate = "January 2024.";
   Serial.printf("\n\rSMAF-DEVELOPMENT-KIT, Crafted with love in Europe.\n\rBuild version: \t%s\n\rBuild date: \t%s\n\r\n\r", buildVersion.c_str(), buildDate.c_str());
 
@@ -100,24 +110,24 @@ void setup() {
   // Set preferences namespace.
   debug(CMD, "Setting preferences namespace to '" + preferencesNamespace + "'.");
   config.setPreferencesNamespace(preferencesNamespace);
-  debug(SCS, "Preferences namespace set to'" + config.getPreferencesNamespace() + "'.");
+  debug(SCS, "Preferences namespace set to'" + config.getPreferencesNamespaceAsStr() + "'.");
 
   // Clear all preferences in namespace.
   // config.clearPreferencesInNamespace(config.getPreferencesNamespace());
 
   // Load Wi-Fi and MQTT configuration preferences.
-  debug(CMD, "Loading preferences from '" + config.getPreferencesNamespace() + "' namespace.");
+  debug(CMD, "Loading preferences from '" + config.getPreferencesNamespaceAsStr() + "' namespace.");
   config.loadPreferences();
 
   // Log preferences information.
-  debug(LOG, "Network Name: '" + config.getNetworkName() + "'.");
-  debug(LOG, "Network Password: '" + config.getNetworkPass() + "'.");
-  debug(LOG, "MQTT Server address: '" + config.getMqttServerAddress() + "'.");
+  debug(LOG, "Network Name: '" + config.getNetworkNameAsStr() + "'.");
+  debug(LOG, "Network Password: '" + config.getNetworkPassAsStr() + "'.");
+  debug(LOG, "MQTT Server address: '" + config.getMqttServerAddressAsStr() + "'.");
   debug(LOG, "MQTT Server port: '" + String(config.getMqttServerPort()) + "'.");
-  debug(LOG, "MQTT Username: '" + config.getMqttUsername() + "'.");
-  debug(LOG, "MQTT Password: '" + config.getMqttPass() + "'.");
-  debug(LOG, "MQTT Client ID: '" + config.getMqttClientId() + "'.");
-  debug(LOG, "MQTT Topic: '" + config.getMqttTopic() + "'.");
+  debug(LOG, "MQTT Username: '" + config.getMqttUsernameAsStr() + "'.");
+  debug(LOG, "MQTT Password: '" + config.getMqttPassAsStr() + "'.");
+  debug(LOG, "MQTT Client ID: '" + config.getMqttClientIdAsStr() + "'.");
+  debug(LOG, "MQTT Topic: '" + config.getMqttTopicAsStr() + "'.");
 
   // Check if configuration preferences are valid and log the result.
   (!config.isConfigValid()) ? debug(ERR, "Preferences not valid.") : debug(SCS, "Preferences are valid.");
@@ -131,9 +141,9 @@ void setup() {
     debug(CMD, "Starting the SoftAP configuration server either because it was initiated by the user or the configuration was incomplete.");
     config.startConfig();
     debug(SCS, "SoftAP configuration server started.");
-    debug(LOG, "SoftAP Name: '" + config.getConfigNetworkName() + "'");
-    debug(LOG, "SoftAP Password: '" + config.getConfigNetworkPass() + "'");
-    debug(LOG, "SoftAP Server IP address: '" + config.getConfigServerIP() + "'");
+    debug(LOG, "SoftAP Name: '" + config.getConfigNetworkNameAsStr() + "'");
+    debug(LOG, "SoftAP Password: '" + config.getConfigNetworkPassAsStr() + "'");
+    debug(LOG, "SoftAP Server IP address: '" + config.getConfigServerIPAsStr() + "'");
     debug(LOG, "SoftAP Server port: '" + String(config.getConfigServerPort()) + "'");
   } else {
     // Set device status to Not Ready.
@@ -150,12 +160,105 @@ void setup() {
 *
 */
 void loop() {
+  // Render the configuration page in maintenance mode.
   while (deviceStatus == MAINTENANCE_MODE) {
     config.renderConfigPage();
   }
 
-  debug(LOG, "Hello world.");
-  delay(800);
+  // Attempt to connect to the Wi-Fi network.
+  connectToNetwork();
+
+  // Attempt to connect to the MQTT broker.
+  connectToMqttBroker();
+
+  // If the device is ready to send, publish a message to the MQTT broker.
+  if (deviceStatus == READY_TO_SEND) {
+    debug(CMD, "MQTT Client '" + config.getMqttClientIdAsStr() + "' sending data to '" + config.getMqttServerAddressAsStr() + "'.");
+    mqtt.publish(config.getMqttTopicAsChr(), "Hello World!", true);
+    debug(SCS, "MQTT Client '" + config.getMqttClientIdAsStr() + "' sent data to '" + config.getMqttServerAddressAsStr() + "'.");
+  }
+
+  // Delay before repeating the loop.
+  delay(1600);
+}
+
+/**
+* @brief Attempt to connect SMAF-DK to the configured Wi-Fi network.
+*
+* If SMAF-DK is not connected to the Wi-Fi network, this function tries to establish
+* a connection using the settings from the WiFiConfig instance.
+*
+* @warning This function may delay for extended periods while attempting to connect
+* to the Wi-Fi network.
+*/
+void connectToNetwork() {
+  if (WiFi.status() != WL_CONNECTED) {
+    // Set initial device status.
+    deviceStatus = NOT_READY;
+
+    // Disable auto-reconnect and set Wi-Fi mode to station mode.
+    WiFi.setAutoReconnect(false);
+    WiFi.mode(WIFI_STA);
+
+    // Log an error if not connected to the configured SSID.
+    debug(ERR, "SMAF-DK not connected to '" + config.getNetworkNameAsStr() + "' network.");
+
+    // Keep attempting to connect until successful.
+    while (WiFi.status() != WL_CONNECTED) {
+      debug(CMD, "Connecting SMAF-DK to '" + config.getNetworkNameAsStr() + "' network.");
+
+      // Attempt to connect to the Wi-Fi network using configured credentials.
+      WiFi.begin(config.getNetworkNameAsChr(), config.getNetworkPassAsChr());
+      delay(4000);
+
+      // Uncomment the following line to restart the ESP32 in case of persistent connection issues.
+      // esp_restart();
+    }
+
+    // Log successful connection and set device status.
+    debug(SCS, "SMAF-DK connected to '" + config.getNetworkNameAsStr() + "' network.");
+  }
+}
+
+/**
+* @brief Attempt to connect to the configured MQTT broker.
+*
+* If the MQTT client is not connected, this function tries to establish a connection
+* to the MQTT broker using the settings from the WiFiConfig instance.
+*
+* @note Assumes that MQTT configuration parameters (server address, port, client ID,
+* username, password) have been previously set in the WiFiConfig instance.
+*
+* @warning This function may delay for extended periods while attempting to connect
+* to the MQTT broker.
+*/
+void connectToMqttBroker() {
+  if (!mqtt.connected()) {
+    // Set initial device status.
+    deviceStatus = NOT_READY;
+
+    // Set MQTT server and connection parameters.
+    mqtt.setServer(config.getMqttServerAddressAsChr(), config.getMqttServerPort());
+    mqtt.setKeepAlive(30000);     // To be configured on the settings page.
+    mqtt.setSocketTimeout(4000);  // To be configured on the settings page.
+
+    // Log an error if not connected.
+    debug(ERR, "MQTT Client '" + config.getMqttClientIdAsStr() + "' not connected to '" + config.getMqttServerAddressAsStr() + "'.");
+
+    // Keep attempting to connect until successful.
+    while (!mqtt.connected()) {
+      debug(CMD, "Connecting MQTT client '" + config.getMqttClientIdAsStr() + "' to '" + config.getMqttServerAddressAsStr() + "'.");
+
+      if (mqtt.connect(config.getMqttClientIdAsChr(), config.getMqttUsernameAsChr(), config.getMqttPassAsChr())) {
+        // Log successful connection and set device status.
+        debug(SCS, "MQTT Client '" + config.getMqttClientIdAsStr() + "' connected to '" + config.getMqttServerAddressAsStr() + "'.");
+        deviceStatus = READY_TO_SEND;
+      } else {
+        // Retry after a delay if connection failed.
+        delay(4000);
+      }
+    }
+  }
 }
 
 /**

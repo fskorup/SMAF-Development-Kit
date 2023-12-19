@@ -83,7 +83,15 @@ public:
   * @return String representing the configured network name.
   *         If empty, returns "NULL".
   */
-  String getConfigNetworkName();
+  String getConfigNetworkNameAsStr();
+
+  /**
+  * @brief Get the configuration network name as a const char*.
+  *
+  * @return Const char* representing the configured network name.
+  *         If empty, returns "NULL".
+  */
+  const char* getConfigNetworkNameAsChr();
 
   /**
   * @brief Get the configured network password for SoftAP.
@@ -91,7 +99,15 @@ public:
   * @return String representing the configured network password.
   *         If empty, returns "NULL".
   */
-  String getConfigNetworkPass();
+  String getConfigNetworkPassAsStr();
+
+  /**
+  * @brief Get the configuration network password as a const char*.
+  *
+  * @return Const char* representing the configured network password.
+  *         If empty, returns "NULL".
+  */
+  const char* getConfigNetworkPassAsChr();
 
   /**
   * @brief Get the IP address of the SoftAP.
@@ -99,7 +115,15 @@ public:
   * @return String representing the IP address of the SoftAP.
   *         If empty, returns "NULL".
   */
-  String getConfigServerIP();
+  String getConfigServerIPAsStr();
+
+  /**
+  * @brief Get the configuration server IP address as a const char*.
+  *
+  * @return Const char* representing the IP address of the SoftAP.
+  *         If empty, returns "NULL".
+  */
+  const char* getConfigServerIPAsChr();
 
   /**
   * @brief Get the configured configuration server port.
@@ -127,6 +151,22 @@ public:
   * @param name The preferences namespace name to be set.
   */
   void setPreferencesNamespace(String name);
+
+  /**
+  * @brief Get the configured preferences namespace.
+  * 
+  * @return String representing the configured preferences namespace.
+  *         If empty, returns "NULL".
+  */
+  String getPreferencesNamespaceAsStr();
+
+  /**
+  * @brief Get the preferences namespace as a const char*.
+  *
+  * @return Const char* representing the configured preferences namespace.
+  *         If empty, returns "NULL".
+  */
+  const char* getPreferencesNamespaceAsChr();
 
   /**
   * @brief Load Wi-Fi and MQTT configuration preferences.
@@ -168,22 +208,22 @@ public:
   * @return True if the configuration is valid, false otherwise.
   */
   bool isConfigValid();
-
-  /**
-  * @brief Get the configured preferences namespace.
-  * 
-  * @return String representing the configured preferences namespace.
-  *         If empty, returns "NULL".
-  */
-  String getPreferencesNamespace();
-
+  
   /**
   * @brief Get the configured Wi-Fi network name.
   * 
   * @return String representing the Wi-Fi network name.
   *         If empty, returns "NULL".
   */
-  String getNetworkName();
+  String getNetworkNameAsStr();
+
+  /**
+  * @brief Get the network name as a const char*.
+  *
+  * @return Const char* representing the Wi-Fi network name.
+  *         If empty, returns "NULL".
+  */
+  const char* getNetworkNameAsChr();
 
   /**
   * @brief Get the configured Wi-Fi network password.
@@ -191,7 +231,15 @@ public:
   * @return String representing the Wi-Fi network password.
   *         If empty, returns "NULL".
   */
-  String getNetworkPass();
+  String getNetworkPassAsStr();
+
+  /**
+  * @brief Get the network password as a const char*.
+  *
+  * @return Const char* representing the Wi-Fi network password.
+  *         If empty, returns "NULL".
+  */
+  const char* getNetworkPassAsChr();
 
   /**
   * @brief Get the configured MQTT server address.
@@ -199,7 +247,15 @@ public:
   * @return String representing the MQTT server address.
   *         If empty, returns "NULL".
   */
-  String getMqttServerAddress();
+  String getMqttServerAddressAsStr();
+
+  /**
+  * @brief Get the MQTT server address as a const char*.
+  *
+  * @return Const char* representing the MQTT server address.
+  *         If empty, returns "NULL".
+  */
+  const char* getMqttServerAddressAsChr();
 
   /**
   * @brief Get the configured MQTT username.
@@ -207,7 +263,15 @@ public:
   * @return String representing the MQTT username.
   *         If empty, returns "NULL".
   */
-  String getMqttUsername();
+  String getMqttUsernameAsStr();
+
+  /**
+  * @brief Get the MQTT username as a const char*.
+  *
+  * @return Const char* representing the MQTT username.
+  *         If empty, returns "NULL".
+  */
+  const char* getMqttUsernameAsChr();
 
   /**
   * @brief Get the configured MQTT password.
@@ -215,7 +279,15 @@ public:
   * @return String representing the MQTT password.
   *         If empty, returns "NULL".
   */
-  String getMqttPass();
+  String getMqttPassAsStr();
+
+  /**
+  * @brief Get the MQTT password as a const char*.
+  *
+  * @return Const char* representing the MQTT password.
+  *         If empty, returns "NULL".
+  */
+  const char* getMqttPassAsChr();
 
   /**
   * @brief Get the configured MQTT client ID.
@@ -223,7 +295,15 @@ public:
   * @return String representing the MQTT client ID.
   *         If empty, returns "NULL".
   */
-  String getMqttClientId();
+  String getMqttClientIdAsStr();
+
+  /**
+  * @brief Get the MQTT client ID as a const char*.
+  *
+  * @return Const char* representing the MQTT client ID.
+  *         If empty, returns "NULL".
+  */
+  const char* getMqttClientIdAsChr();
 
   /**
   * @brief Get the configured MQTT topic.
@@ -231,14 +311,22 @@ public:
   * @return String representing the MQTT topic.
   *         If empty, returns "NULL".
   */
-  String getMqttTopic();
+  String getMqttTopicAsStr();
+
+  /**
+  * @brief Get the MQTT topic as a const char*.
+  *
+  * @return Const char* representing the MQTT topic.
+  *         If empty, returns "NULL".
+  */
+  const char* getMqttTopicAsChr();
 
   /**
   * @brief Get the MQTT server port.
   *
   * @return The MQTT server port.
   */
-  uint16_t getMqttServerPort();
+  int getMqttServerPort();
 
 private:
   // Server instance for handling SoftAP configuration.
@@ -254,14 +342,14 @@ private:
   String _preferencesNamespace;
 
   // Network and MQTT configuration parameters.
-  String _networkName;           // Wi-Fi network name.
-  String _networkPass;           // Wi-Fi network password.
-  String _mqttServerAddress;     // MQTT server address.
-  String _mqttUsername;          // MQTT username.
-  String _mqttPass;              // MQTT password.
-  String _mqttClientId;          // MQTT client ID.
-  String _mqttTopic;             // MQTT topic.
-  uint16_t _mqttServerPort = 0;  // MQTT server port.
+  String _networkName;        // Wi-Fi network name.
+  String _networkPass;        // Wi-Fi network password.
+  String _mqttServerAddress;  // MQTT server address.
+  String _mqttUsername;       // MQTT username.
+  String _mqttPass;           // MQTT password.
+  String _mqttClientId;       // MQTT client ID.
+  String _mqttTopic;          // MQTT topic.
+  int _mqttServerPort = 0;    // MQTT server port.
 
   // Flag indicating whether the configuration is valid.
   bool _isConfigValid;

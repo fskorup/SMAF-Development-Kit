@@ -85,8 +85,18 @@ void WiFiConfig::startConfig() {
 * @return String representing the configured network name.
 *         If empty, returns "NULL".
 */
-String WiFiConfig::getConfigNetworkName() {
+String WiFiConfig::getConfigNetworkNameAsStr() {
   return _configNetworkName.isEmpty() ? "NULL" : _configNetworkName;
+}
+
+/**
+* @brief Get the configuration network name as a const char*.
+*
+* @return Const char* representing the configured network name.
+*         If empty, returns "NULL".
+*/
+const char* WiFiConfig::getConfigNetworkNameAsChr() {
+  return _configNetworkName.isEmpty() ? "NULL" : _configNetworkName.c_str();
 }
 
 /**
@@ -95,8 +105,18 @@ String WiFiConfig::getConfigNetworkName() {
 * @return String representing the configured network password.
 *         If empty, returns "NULL".
 */
-String WiFiConfig::getConfigNetworkPass() {
+String WiFiConfig::getConfigNetworkPassAsStr() {
   return _configNetworkPass.isEmpty() ? "NULL" : _configNetworkPass;
+}
+
+/**
+* @brief Get the configuration network password as a const char*.
+*
+* @return Const char* representing the configured network password.
+*         If empty, returns "NULL".
+*/
+const char* WiFiConfig::getConfigNetworkPassAsChr() {
+  return _configNetworkPass.isEmpty() ? "NULL" : _configNetworkPass.c_str();
 }
 
 /**
@@ -105,8 +125,18 @@ String WiFiConfig::getConfigNetworkPass() {
 * @return String representing the IP address of the SoftAP.
 *         If empty, returns "NULL".
 */
-String WiFiConfig::getConfigServerIP() {
+String WiFiConfig::getConfigServerIPAsStr() {
   return _configServerIP.isEmpty() ? "NULL" : _configServerIP;
+}
+
+/**
+* @brief Get the configuration server IP address as a const char*.
+*
+* @return Const char* representing the IP address of the SoftAP.
+*         If empty, returns "NULL".
+*/
+const char* WiFiConfig::getConfigServerIPAsChr() {
+  return _configServerIP.isEmpty() ? "NULL" : _configServerIP.c_str();
 }
 
 /**
@@ -219,7 +249,7 @@ void WiFiConfig::renderConfigPage() {
   html += "<h2>WiFi router<br>configuration</h2>";
   html += "<p>Establish and customize the wireless network name (SSID) and configure the Access Point for a secure and reliable connection.</p>";
   html += "<div class='frame-primary'>";
-  html += "<div class='frame-secondary'><label for='" + String(NETWORK_NAME) + "'>SSID Name:</label><input id='" + String(NETWORK_NAME) + "' type='text' name='" + String(NETWORK_NAME) + "' value='" + _networkName + "'></div>";
+  html += "<div class='frame-secondary'><label for='" + String(NETWORK_NAME) + "'>SSID Name:</label><input id='" + String(NETWORK_NAME) + "' type='text' name='" + String(NETWORK_NAME) + "' value='" + _networkName + "'></div>";  // something wrong here, not displayed if separator is in the string.
   html += "<div class='frame-secondary'><label for='" + String(NETWORK_PASS) + "'>SSID Password:</label><input id='" + String(NETWORK_PASS) + "' type='text' name='" + String(NETWORK_PASS) + "' value='" + _networkPass + "'></div>";
   html += "</div>";
   html += "<h2>MQTT server<br>configuration</h2>";
@@ -269,6 +299,26 @@ void WiFiConfig::setPreferencesNamespace(String name) {
 }
 
 /**
+* @brief Get the configured preferences namespace.
+* 
+* @return String representing the configured preferences namespace.
+*         If empty, returns "NULL".
+*/
+String WiFiConfig::getPreferencesNamespaceAsStr() {
+  return _preferencesNamespace.isEmpty() ? "NULL" : _preferencesNamespace;
+}
+
+/**
+* @brief Get the preferences namespace as a const char*.
+*
+* @return Const char* representing the configured preferences namespace.
+*         If empty, returns "NULL".
+*/
+const char* WiFiConfig::getPreferencesNamespaceAsChr() {
+  return _preferencesNamespace.isEmpty() ? "NULL" : _preferencesNamespace.c_str();
+}
+
+/**
 * @brief Load Wi-Fi and MQTT configuration preferences.
 *
 * This method reads configuration parameters from non-volatile storage using the
@@ -290,7 +340,7 @@ void WiFiConfig::loadPreferences() {
 
   // Load MQTT configuration.
   _mqttServerAddress = preferences.getString(MQTT_SERVER_ADDRESS, String());
-  _mqttServerPort = preferences.getUShort(MQTT_SERVER_PORT, 0);
+  _mqttServerPort = preferences.getInt(MQTT_SERVER_PORT, 0);
   _mqttUsername = preferences.getString(MQTT_USERNAME, String());
   _mqttPass = preferences.getString(MQTT_PASS, String());
   _mqttClientId = preferences.getString(MQTT_CLIENT_ID, String());
@@ -331,7 +381,7 @@ void WiFiConfig::savePreferences() {
 
   // Save MQTT configuration.
   preferences.putString(MQTT_SERVER_ADDRESS, _mqttServerAddress);
-  preferences.putUShort(MQTT_SERVER_PORT, _mqttServerPort);
+  preferences.putInt(MQTT_SERVER_PORT, _mqttServerPort);
   preferences.putString(MQTT_USERNAME, _mqttUsername);
   preferences.putString(MQTT_PASS, _mqttPass);
   preferences.putString(MQTT_CLIENT_ID, _mqttClientId);
@@ -364,6 +414,9 @@ void WiFiConfig::clearPreferencesInNamespace(String name) {
 
   // End preferences.
   preferences.end();
+
+  // Uncomment the following line if a device restart is desired after saving preferences.
+  // ESP.restart();
 }
 
 /**
@@ -378,23 +431,23 @@ bool WiFiConfig::isConfigValid() {
 }
 
 /**
-* @brief Get the configured preferences namespace.
-* 
-* @return String representing the configured preferences namespace.
-*         If empty, returns "NULL".
-*/
-String WiFiConfig::getPreferencesNamespace() {
-  return _preferencesNamespace.isEmpty() ? "NULL" : _preferencesNamespace;
-}
-
-/**
 * @brief Get the configured Wi-Fi network name.
 * 
 * @return String representing the Wi-Fi network name.
 *         If empty, returns "NULL".
 */
-String WiFiConfig::getNetworkName() {
+String WiFiConfig::getNetworkNameAsStr() {
   return _networkName.isEmpty() ? "NULL" : _networkName;
+}
+
+/**
+* @brief Get the network name as a const char*.
+*
+* @return Const char* representing the Wi-Fi network name.
+*         If empty, returns "NULL".
+*/
+const char* WiFiConfig::getNetworkNameAsChr() {
+  return _networkName.isEmpty() ? "NULL" : _networkName.c_str();
 }
 
 /**
@@ -403,8 +456,18 @@ String WiFiConfig::getNetworkName() {
 * @return String representing the Wi-Fi network password.
 *         If empty, returns "NULL".
 */
-String WiFiConfig::getNetworkPass() {
+String WiFiConfig::getNetworkPassAsStr() {
   return _networkPass.isEmpty() ? "NULL" : _networkPass;
+}
+
+/**
+* @brief Get the network password as a const char*.
+*
+* @return Const char* representing the Wi-Fi network password.
+*         If empty, returns "NULL".
+*/
+const char* WiFiConfig::getNetworkPassAsChr() {
+  return _networkPass.isEmpty() ? "NULL" : _networkPass.c_str();
 }
 
 /**
@@ -413,8 +476,18 @@ String WiFiConfig::getNetworkPass() {
 * @return String representing the MQTT server address.
 *         If empty, returns "NULL".
 */
-String WiFiConfig::getMqttServerAddress() {
+String WiFiConfig::getMqttServerAddressAsStr() {
   return _mqttServerAddress.isEmpty() ? "NULL" : _mqttServerAddress;
+}
+
+/**
+* @brief Get the MQTT server address as a const char*.
+*
+* @return Const char* representing the MQTT server address.
+*         If empty, returns "NULL".
+*/
+const char* WiFiConfig::getMqttServerAddressAsChr() {
+  return _mqttServerAddress.isEmpty() ? "NULL" : _mqttServerAddress.c_str();
 }
 
 /**
@@ -423,8 +496,18 @@ String WiFiConfig::getMqttServerAddress() {
 * @return String representing the MQTT username.
 *         If empty, returns "NULL".
 */
-String WiFiConfig::getMqttUsername() {
+String WiFiConfig::getMqttUsernameAsStr() {
   return _mqttUsername.isEmpty() ? "NULL" : _mqttUsername;
+}
+
+/**
+* @brief Get the MQTT username as a const char*.
+*
+* @return Const char* representing the MQTT username.
+*         If empty, returns "NULL".
+*/
+const char* WiFiConfig::getMqttUsernameAsChr() {
+  return _mqttUsername.isEmpty() ? "NULL" : _mqttUsername.c_str();
 }
 
 /**
@@ -433,8 +516,18 @@ String WiFiConfig::getMqttUsername() {
 * @return String representing the MQTT password.
 *         If empty, returns "NULL".
 */
-String WiFiConfig::getMqttPass() {
+String WiFiConfig::getMqttPassAsStr() {
   return _mqttPass.isEmpty() ? "NULL" : _mqttPass;
+}
+
+/**
+* @brief Get the MQTT password as a const char*.
+*
+* @return Const char* representing the MQTT password.
+*         If empty, returns "NULL".
+*/
+const char* WiFiConfig::getMqttPassAsChr() {
+  return _mqttPass.isEmpty() ? "NULL" : _mqttPass.c_str();
 }
 
 /**
@@ -443,8 +536,18 @@ String WiFiConfig::getMqttPass() {
 * @return String representing the MQTT client ID.
 *         If empty, returns "NULL".
 */
-String WiFiConfig::getMqttClientId() {
+String WiFiConfig::getMqttClientIdAsStr() {
   return _mqttClientId.isEmpty() ? "NULL" : _mqttClientId;
+}
+
+/**
+* @brief Get the MQTT client ID as a const char*.
+*
+* @return Const char* representing the MQTT client ID.
+*         If empty, returns "NULL".
+*/
+const char* WiFiConfig::getMqttClientIdAsChr() {
+  return _mqttClientId.isEmpty() ? "NULL" : _mqttClientId.c_str();
 }
 
 /**
@@ -453,8 +556,18 @@ String WiFiConfig::getMqttClientId() {
 * @return String representing the MQTT topic.
 *         If empty, returns "NULL".
 */
-String WiFiConfig::getMqttTopic() {
+String WiFiConfig::getMqttTopicAsStr() {
   return _mqttTopic.isEmpty() ? "NULL" : _mqttTopic;
+}
+
+/**
+* @brief Get the MQTT topic as a const char*.
+*
+* @return Const char* representing the MQTT topic.
+*         If empty, returns "NULL".
+*/
+const char* WiFiConfig::getMqttTopicAsChr() {
+  return _mqttTopic.isEmpty() ? "NULL" : _mqttTopic.c_str();
 }
 
 /**
@@ -462,7 +575,7 @@ String WiFiConfig::getMqttTopic() {
 *
 * @return The MQTT server port.
 */
-uint16_t WiFiConfig::getMqttServerPort() {
+int WiFiConfig::getMqttServerPort() {
   return _mqttServerPort;
 }
 
