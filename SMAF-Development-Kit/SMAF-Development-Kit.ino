@@ -27,6 +27,7 @@
 #include "Helpers.h"
 #include "WiFi.h"
 #include "WiFiConfig.h"
+#include "DeviceStatusVisualizer.h"
 
 // Define constants for ESP32 core numbers.
 #define ESP32_CORE_PRIMARY 0    // Numeric value representing the primary core.
@@ -59,6 +60,9 @@ uint16_t configServerPort = 80;
 // WiFiConfig instance with the specified configuration.
 WiFiConfig config(configNetworkName, configNetworkPass, configServerPort);
 
+// Instantiate DeviceStatusVisualizer with RGB LED pins: LED_RED, LED_GREEN, LED_BLUE.
+DeviceStatusVisualizer statusVisualizer(LED_RED, LED_GREEN, LED_BLUE);
+
 /**
 * @brief Initializes the SMAF-Development-Kit and runs once at the beginning.
 *
@@ -70,11 +74,6 @@ WiFiConfig config(configNetworkName, configNetworkPass, configServerPort);
 void setup() {
   // Initialize serial communication at a baud rate of 115200.
   Serial.begin(115200);
-
-  // Turn off all LEDs initially.
-  digitalWrite(LED_RED, !LOW);
-  digitalWrite(LED_GREEN, !LOW);
-  digitalWrite(LED_BLUE, !LOW);
 
   // Set the pin mode for the configuration button to INPUT.
   pinMode(configurationButton, INPUT);
@@ -160,66 +159,43 @@ void loop() {
 }
 
 /**
-* @brief Device status handling thread.
+* @brief Thread function for handling device status indications through an RGB LED.
 *
-* This function is a FreeRTOS thread that continuously monitors the device status
-* and takes corresponding actions based on the status.
+* This thread continuously updates the RGB LED status based on the current device status.
+* It uses the DeviceStatusEnum values to determine the appropriate LED indication.
 *
 * @param pvParameters Pointer to task parameters (not used in this function).
 */
 void DeviceStatusThread(void* pvParameters) {
   while (true) {
-    // Turn off all LEDs initially.
-    digitalWrite(LED_RED, !LOW);
-    digitalWrite(LED_GREEN, !LOW);
-    digitalWrite(LED_BLUE, !LOW);
+    // Turn off all LEDs before updating the status indication.
+    statusVisualizer.shutOffAll();
 
-    // Handle different device statuses.
+    // Update LED status based on the current device status.
     switch (deviceStatus) {
       case NONE:
-        // Disable RGB led.
-        digitalWrite(LED_RED, !LOW);
-        digitalWrite(LED_GREEN, !LOW);
-        digitalWrite(LED_BLUE, !LOW);
+        // No specific indication for 'NONE' status.
+        statusVisualizer.shutOffAll();
         break;
 
       case NOT_READY:
-        // Blink the red LED to indicate the device is not ready.
-        digitalWrite(LED_RED, !HIGH);
-        delay(160);
-        digitalWrite(LED_RED, !LOW);
-        delay(160);
+        // Blink the LED in red to indicate 'NOT_READY' status.
+        statusVisualizer.blinkRed(240);
         break;
 
       case READY_TO_SEND:
-        // Blink the green LED multiple times to indicate the device is ready to send.
-        for (int i = 0; i < 4; ++i) {
-          digitalWrite(LED_GREEN, !HIGH);
-          delay(40);
-          digitalWrite(LED_GREEN, !LOW);
-          delay(40);
-        }
-
-        // Additional delay after blinking for visibility.
-        delay(1200);
+        // Burst the LED in green to indicate 'READY_TO_SEND' status.
+        statusVisualizer.burstGreen(40, 1200, 4);
         break;
 
       case WAITING_GNSS:
-        // Blink the blue LED to indicate the device is waiting for GNSS signal lock.
-        digitalWrite(LED_BLUE, !HIGH);
-        delay(160);
-        digitalWrite(LED_BLUE, !LOW);
-        delay(160);
+        // Blink the LED in blue to indicate 'WAITING_GNSS' status.
+        statusVisualizer.blinkBlue(240);
         break;
 
       case MAINTENANCE_MODE:
-        // Blink both blue and red LEDs to indicate the device is in maintenance mode.
-        digitalWrite(LED_BLUE, !HIGH);
-        digitalWrite(LED_RED, !HIGH);
-        delay(160);
-        digitalWrite(LED_BLUE, !LOW);
-        digitalWrite(LED_RED, !LOW);
-        delay(160);
+        // Blink the LED in purple to indicate 'MAINTENANCE_MODE' status.
+        statusVisualizer.blinkPurple(240);
         break;
     }
   }

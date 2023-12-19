@@ -2,7 +2,13 @@
 * @file WiFiConfig.h
 * @brief Declaration of WiFiConfig functions for SoftAP configurator.
 *
-* This file contains the declarations of helper functions used in the Arduino project.
+* This file contains the declarations of helper functions used in the Arduino project
+* for configuring Wi-Fi and MQTT settings using a SoftAP (Access Point). It includes
+* functionality to start the SoftAP configuration process, render a configuration page,
+* load and save configuration preferences, and more.
+*
+* @note This library assumes the use of the Preferences library for storing configuration
+* parameters in non-volatile memory.
 *
 * @license MIT License
 *
