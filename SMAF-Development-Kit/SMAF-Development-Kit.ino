@@ -185,7 +185,7 @@ void DeviceStatusThread(void* pvParameters) {
 
       case READY_TO_SEND:
         // Burst the LED in green to indicate 'READY_TO_SEND' status.
-        statusVisualizer.burstGreen(40, 1200, 4);
+        statusVisualizer.burstGreen(80, 1200, 4);
         break;
 
       case WAITING_GNSS:

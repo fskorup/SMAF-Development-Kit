@@ -143,11 +143,11 @@ void DeviceStatusVisualizer::burstRed(uint32_t interval, uint32_t delayBeforeNex
   for (int i = 0; i < blinkCount; ++i) {
     // Turn on the red channel.
     digitalWrite(_redPin, LOW);
-    delay(interval);
+    delay(interval / 2);
 
     // Turn off the red channel.
     digitalWrite(_redPin, HIGH);
-    delay(interval);
+    delay(interval / 2);
   }
 
   // Add a delay before starting the next burst.
@@ -169,11 +169,11 @@ void DeviceStatusVisualizer::burstGreen(uint32_t interval, uint32_t delayBeforeN
   for (int i = 0; i < blinkCount; ++i) {
     // Turn on the green channel.
     digitalWrite(_greenPin, LOW);
-    delay(interval);
+    delay(interval / 2);
 
     // Turn off the green channel.
     digitalWrite(_greenPin, HIGH);
-    delay(interval);
+    delay(interval / 2);
   }
 
   // Add a delay before starting the next burst.
@@ -195,11 +195,11 @@ void DeviceStatusVisualizer::burstBlue(uint32_t interval, uint32_t delayBeforeNe
   for (int i = 0; i < blinkCount; ++i) {
     // Turn on the blue channel.
     digitalWrite(_bluePin, LOW);
-    delay(interval);
+    delay(interval / 2);
 
     // Turn off the blue channel.
     digitalWrite(_bluePin, HIGH);
-    delay(interval);
+    delay(interval / 2);
   }
 
   // Add a delay before starting the next burst.
@@ -222,12 +222,12 @@ void DeviceStatusVisualizer::burstPurple(uint32_t interval, uint32_t delayBefore
     // Turn on the red and blue channels.
     digitalWrite(_redPin, LOW);
     digitalWrite(_bluePin, LOW);
-    delay(interval);
+    delay(interval / 2);
 
     // Turn off the red and blue channels.
     digitalWrite(_redPin, HIGH);
     digitalWrite(_bluePin, HIGH);
-    delay(interval);
+    delay(interval / 2);
   }
 
   // Add a delay before starting the next burst.
