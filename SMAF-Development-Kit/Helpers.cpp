@@ -28,19 +28,21 @@
 #include "Arduino.h"
 #include "Helpers.h"
 
-MessageTypeEnum messageType = LOG;  // Define the variable.
+// Define the variable for message type.
+MessageTypeEnum messageType = LOG;
 
 /**
-* @brief Debugging function to print messages with different types.
-*
-* This function prints debug messages to the Serial monitor with a specified message type.
-*
-* @param messageType The type of the message (CLR, ERR, SCS, CMD).
-* @param message The message to be printed.
-*/
-void debug(byte messageType, String message) {
+ * @brief Debugging function to print messages with different types.
+ *
+ * This function prints debug messages to the Serial monitor with a specified message type.
+ *
+ * @param messageType The type of the message (LOG, ERR, SCS, CMD).
+ * @param format The format string for the message.
+ * @param ... Additional arguments to be formatted.
+ */
+void debug(MessageTypeEnum messageType, const char *format, ...) {
   // Set up an empty string to store the message type as a string
-  String messageTypeStr = String();
+  String messageTypeStr;
 
   // Switch statement to determine the message type string based on the input byte
   switch (messageType) {
@@ -61,6 +63,13 @@ void debug(byte messageType, String message) {
       break;
   }
 
-  // Print the formatted debug message to the Serial monitor
-  Serial.printf("CORE-%02d | %5s | %s\n\r", xPortGetCoreID(), messageTypeStr.c_str(), message.c_str());
+  // Format the variable arguments directly.
+  va_list args;
+  va_start(args, format);
+  char buffer[256];  // Adjust the buffer size according to your needs.
+  vsnprintf(buffer, sizeof(buffer), format, args);
+  va_end(args);
+
+  // Print the formatted debug message to the Serial monitor.
+  Serial.printf("CORE-%02d | %5s | %s\n\r", xPortGetCoreID(), messageTypeStr.c_str(), buffer);
 }

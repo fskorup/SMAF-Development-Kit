@@ -46,12 +46,14 @@
 * @param configNetworkName The Wi-Fi network name for configuration.
 * @param configNetworkPass The Wi-Fi network password for configuration.
 * @param configServerPort The port for the SoftAP configuration server.
+* @param preferencesNamespace The namespace for storing configuration preferences.
 */
-WiFiConfig::WiFiConfig(String configNetworkName, String configNetworkPass, uint16_t configServerPort)
+WiFiConfig::WiFiConfig(const char* configNetworkName, const char* configNetworkPass, uint16_t configServerPort, const char* preferencesNamespace)
   : _configNetworkName(configNetworkName),
     _configNetworkPass(configNetworkPass),
     _configServerPort(configServerPort),
-    _configServerInstance(configServerPort) {
+    _configServerInstance(configServerPort),
+    _preferencesNamespace(preferencesNamespace) {
   // Constructor implementation goes here
 }
 
@@ -67,82 +69,84 @@ WiFiConfig::WiFiConfig(String configNetworkName, String configNetworkPass, uint1
 */
 void WiFiConfig::startConfig() {
   // Start SoftAP with the specified network name and password.
-  WiFi.softAP(_configNetworkName.c_str(), _configNetworkPass.c_str());
+  WiFi.softAP(_configNetworkName, _configNetworkPass);
 
   // Introduce a delay for SoftAP initialization.
   delay(800);
 
   // Begin the configuration server instance.
   _configServerInstance.begin();
-
-  // Get the SoftAP IP address.
-  _configServerIP = String(WiFi.softAPIP().toString());
 }
 
 /**
 * @brief Get the configured network name for SoftAP.
 * 
-* @return String representing the configured network name.
+* @return const char* representing the configured network name.
 *         If empty, returns "NULL".
+* 
+* @note The returned pointer is valid until the class instance is destroyed,
+*       or until the next call to a function that modifies the network name.
 */
-String WiFiConfig::getConfigNetworkNameAsStr() {
-  return _configNetworkName.isEmpty() ? "NULL" : _configNetworkName;
-}
+const char* WiFiConfig::getConfigNetworkName() {
+  if (_configNetworkName == nullptr || _configNetworkName[0] == '\0') {
+    return "NULL";
+  }
 
-/**
-* @brief Get the configuration network name as a const char*.
-*
-* @return Const char* representing the configured network name.
-*         If empty, returns "NULL".
-*/
-const char* WiFiConfig::getConfigNetworkNameAsChr() {
-  return _configNetworkName.isEmpty() ? "NULL" : _configNetworkName.c_str();
+  return _configNetworkName;
 }
 
 /**
 * @brief Get the configured network password for SoftAP.
 * 
-* @return String representing the configured network password.
+* @return const char* representing the configured network password.
 *         If empty, returns "NULL".
+* 
+* @note The returned pointer is valid until the class instance is destroyed,
+*       or until the next call to a function that modifies the network password.
 */
-String WiFiConfig::getConfigNetworkPassAsStr() {
-  return _configNetworkPass.isEmpty() ? "NULL" : _configNetworkPass;
-}
+const char* WiFiConfig::getConfigNetworkPass() {
+  if (_configNetworkPass == nullptr || _configNetworkPass[0] == '\0') {
+    return "NULL";
+  }
 
-/**
-* @brief Get the configuration network password as a const char*.
-*
-* @return Const char* representing the configured network password.
-*         If empty, returns "NULL".
-*/
-const char* WiFiConfig::getConfigNetworkPassAsChr() {
-  return _configNetworkPass.isEmpty() ? "NULL" : _configNetworkPass.c_str();
+  return _configNetworkPass;
 }
 
 /**
 * @brief Get the IP address of the SoftAP.
 * 
-* @return String representing the IP address of the SoftAP.
-*         If empty, returns "NULL".
+* @return const char* representing the IP address of the SoftAP.
+*         If empty, returns "0.0.0.0".
+* 
+* @note The returned pointer is valid until the class instance is destroyed,
+*       or until the next call to a function that modifies the SoftAP IP address.
+*       It is recommended to avoid modifying the returned pointer directly.
+*       If dynamic memory allocation is a concern, consider using a static buffer.
 */
-String WiFiConfig::getConfigServerIPAsStr() {
-  return _configServerIP.isEmpty() ? "NULL" : _configServerIP;
-}
+const char* WiFiConfig::getConfigServerIp() {
+  static char configServerIpChr[16];  // Assuming IPv4 address, e.g., "192.168.1.1".
 
-/**
-* @brief Get the configuration server IP address as a const char*.
-*
-* @return Const char* representing the IP address of the SoftAP.
-*         If empty, returns "NULL".
-*/
-const char* WiFiConfig::getConfigServerIPAsChr() {
-  return _configServerIP.isEmpty() ? "NULL" : _configServerIP.c_str();
+  // Get the SoftAP IP address.
+  String configServerIpStr = WiFi.softAPIP().toString();
+
+  // Copy the IP address to the static buffer.
+  strncpy(configServerIpChr, configServerIpStr.c_str(), sizeof(configServerIpChr) - 1);
+  configServerIpChr[sizeof(configServerIpChr) - 1] = '\0';  // Ensure null-termination.
+
+  // Check if the IP address is empty.
+  if (configServerIpStr.isEmpty()) {
+    return "0.0.0.0";
+  }
+
+  return configServerIpChr;
 }
 
 /**
 * @brief Get the configured configuration server port.
 * 
 * @return uint16_t representing the configuration server port.
+* 
+* @note The returned port value is valid for the lifetime of the class instance.
 */
 uint16_t WiFiConfig::getConfigServerPort() {
   return _configServerPort;
@@ -157,23 +161,26 @@ uint16_t WiFiConfig::getConfigServerPort() {
 * @note The HTML structure and styling are included for presentation purposes.
 */
 void WiFiConfig::renderConfigPage() {
-  // Check if a client has connected
+  // Check if a client has connected.
   WiFiClient client = _configServerInstance.available();
 
   if (!client) {
-    return;  // No client, exit the loop
+    return;  // No client, exit the loop.
   }
 
-  // Wait until the client sends some data
+  // Wait until the client sends some data.
   while (!client.available()) {
     delay(1);
   }
 
-  // Read the first line of the request
+  // Read the first line of the request.
   String request = client.readStringUntil('\r');
   client.flush();
 
-  // Serve the HTML page
+  /**
+  * @note THIS WILL BE UPDATED IN FUTURE VERSION.
+  */
+  // Serve the HTML page.
   String html = String();
   html = "<!DOCTYPE html>";
   html += "<html lang='en'>";
@@ -211,7 +218,7 @@ void WiFiConfig::renderConfigPage() {
   html += "<p>Ribeye biltong salami, rump ham hock tail turducken meatball short loin meatloaf buffalo shank. Andouille venison pork chop chicken jowl kevin.</p>";
   html += "</header>";
 
-  // Check if the request is a form submission
+  // Check if the request is a form submission.
   if (request.indexOf("/configuration") != -1) {
     _networkName = parseFieldValue(request, NETWORK_NAME);
     _networkPass = parseFieldValue(request, NETWORK_PASS);
@@ -225,7 +232,7 @@ void WiFiConfig::renderConfigPage() {
     // Save preferences.
     savePreferences();
 
-    // Display a success message with the saved configuration
+    // Display a success message with the saved configuration.
     html += "<section class='success'>";
     html += "<p>Configuration successfully saved to device. Data saved in device memory is shown bellow.</p>";
     html += "<ul>";
@@ -249,7 +256,7 @@ void WiFiConfig::renderConfigPage() {
   html += "<h2>WiFi router<br>configuration</h2>";
   html += "<p>Establish and customize the wireless network name (SSID) and configure the Access Point for a secure and reliable connection.</p>";
   html += "<div class='frame-primary'>";
-  html += "<div class='frame-secondary'><label for='" + String(NETWORK_NAME) + "'>SSID Name:</label><input id='" + String(NETWORK_NAME) + "' type='text' name='" + String(NETWORK_NAME) + "' value='" + _networkName + "'></div>";  // something wrong here, not displayed if separator is in the string.
+  html += "<div class='frame-secondary'><label for='" + String(NETWORK_NAME) + "'>SSID Name:</label><input id='" + String(NETWORK_NAME) + "' type='text' name='" + String(NETWORK_NAME) + "' value=\"" + _networkName + "\"></div>";  // something wrong here, not displayed if separator is in the string.
   html += "<div class='frame-secondary'><label for='" + String(NETWORK_PASS) + "'>SSID Password:</label><input id='" + String(NETWORK_PASS) + "' type='text' name='" + String(NETWORK_PASS) + "' value='" + _networkPass + "'></div>";
   html += "</div>";
   html += "<h2>MQTT server<br>configuration</h2>";
@@ -278,7 +285,7 @@ void WiFiConfig::renderConfigPage() {
   html += "</html>";
   //*/
 
-  // Send the response to the client
+  // Send the response to the client.
   client.println("HTTP/1.1 200 OK");
   client.println("Content-Type: text/html");
   client.println("Connection: close");
@@ -287,35 +294,36 @@ void WiFiConfig::renderConfigPage() {
 }
 
 /**
-* @brief Set the preferences namespace.
+* @brief Save Wi-Fi and MQTT configuration preferences.
 *
-* This method sets the preferences namespace, allowing for a customized namespace
-* when saving and loading preferences related to Wi-Fi and MQTT configuration.
-*
-* @param name The preferences namespace name to be set.
+* This method stores the current configuration parameters to non-volatile storage
+* using the Preferences library. It saves Wi-Fi network name, password, MQTT server
+* address, port, username, password, client ID, and topic for future use.
 */
-void WiFiConfig::setPreferencesNamespace(String name) {
-  _preferencesNamespace = name;
-}
+void WiFiConfig::savePreferences() {
+  // Create a Preferences instance with the specified namespace.
+  Preferences preferences;
 
-/**
-* @brief Get the configured preferences namespace.
-* 
-* @return String representing the configured preferences namespace.
-*         If empty, returns "NULL".
-*/
-String WiFiConfig::getPreferencesNamespaceAsStr() {
-  return _preferencesNamespace.isEmpty() ? "NULL" : _preferencesNamespace;
-}
+  // Begin preferences with the specified namespace.
+  preferences.begin(_preferencesNamespace, false);
 
-/**
-* @brief Get the preferences namespace as a const char*.
-*
-* @return Const char* representing the configured preferences namespace.
-*         If empty, returns "NULL".
-*/
-const char* WiFiConfig::getPreferencesNamespaceAsChr() {
-  return _preferencesNamespace.isEmpty() ? "NULL" : _preferencesNamespace.c_str();
+  // Save Wi-Fi network configuration.
+  preferences.putString(NETWORK_NAME, _networkName);
+  preferences.putString(NETWORK_PASS, _networkPass);
+
+  // Save MQTT configuration.
+  preferences.putString(MQTT_SERVER_ADDRESS, _mqttServerAddress);
+  preferences.putInt(MQTT_SERVER_PORT, _mqttServerPort);
+  preferences.putString(MQTT_USERNAME, _mqttUsername);
+  preferences.putString(MQTT_PASS, _mqttPass);
+  preferences.putString(MQTT_CLIENT_ID, _mqttClientId);
+  preferences.putString(MQTT_TOPIC, _mqttTopic);
+
+  // End preferences session.
+  preferences.end();
+
+  // Uncomment the following line if a device restart is desired after saving preferences.
+  // ESP.restart();
 }
 
 /**
@@ -332,7 +340,7 @@ void WiFiConfig::loadPreferences() {
   Preferences preferences;
 
   // Begin preferences with the specified namespace.
-  preferences.begin(_preferencesNamespace.c_str(), false);
+  preferences.begin(_preferencesNamespace, false);
 
   // Load Wi-Fi network configuration.
   _networkName = preferences.getString(NETWORK_NAME, String());
@@ -358,56 +366,17 @@ void WiFiConfig::loadPreferences() {
 }
 
 /**
-* @brief Save Wi-Fi and MQTT configuration preferences.
-*
-* This method stores the current configuration parameters to non-volatile storage
-* using the Preferences library. It saves Wi-Fi network name, password, MQTT server
-* address, port, username, password, client ID, and topic for future use.
-*
-* @note The Preferences library is used to store and retrieve non-volatile data.
-*       Uncommenting the ESP.restart() line will restart the device after saving preferences,
-*       useful if a restart is desired after configuration changes.
-*/
-void WiFiConfig::savePreferences() {
-  // Create a Preferences instance with the specified namespace.
-  Preferences preferences;
-
-  // Begin preferences with the specified namespace.
-  preferences.begin(_preferencesNamespace.c_str(), false);
-
-  // Save Wi-Fi network configuration.
-  preferences.putString(NETWORK_NAME, _networkName);
-  preferences.putString(NETWORK_PASS, _networkPass);
-
-  // Save MQTT configuration.
-  preferences.putString(MQTT_SERVER_ADDRESS, _mqttServerAddress);
-  preferences.putInt(MQTT_SERVER_PORT, _mqttServerPort);
-  preferences.putString(MQTT_USERNAME, _mqttUsername);
-  preferences.putString(MQTT_PASS, _mqttPass);
-  preferences.putString(MQTT_CLIENT_ID, _mqttClientId);
-  preferences.putString(MQTT_TOPIC, _mqttTopic);
-
-  // End preferences session.
-  preferences.end();
-
-  // Uncomment the following line if a device restart is desired after saving preferences.
-  // ESP.restart();
-}
-
-/**
 * @brief Clear all preferences within a specific namespace.
 *
 * This function clears all preferences stored within the specified namespace,
 * effectively resetting them to their default values.
-*
-* @param name The namespace for which preferences should be cleared.
 */
-void WiFiConfig::clearPreferencesInNamespace(String name) {
+void WiFiConfig::clearPreferences() {
   // Create a Preferences instance with the specified namespace.
   Preferences preferences;
 
   // Begin preferences with the specified namespace.
-  preferences.begin(name.c_str(), false);
+  preferences.begin(_preferencesNamespace, false);
 
   // Clear all preferences in the specified namespace.
   preferences.clear();
@@ -433,141 +402,120 @@ bool WiFiConfig::isConfigValid() {
 /**
 * @brief Get the configured Wi-Fi network name.
 * 
-* @return String representing the Wi-Fi network name.
+* @return const char* representing the Wi-Fi network name.
 *         If empty, returns "NULL".
+* 
+* @note The returned pointer is valid until the class instance is destroyed,
+*       or until the next call to a function that modifies the Wi-Fi network name.
 */
-String WiFiConfig::getNetworkNameAsStr() {
-  return _networkName.isEmpty() ? "NULL" : _networkName;
-}
+const char* WiFiConfig::getNetworkName() {
+  if (_networkName.isEmpty()) {
+    return "NULL";
+  }
 
-/**
-* @brief Get the network name as a const char*.
-*
-* @return Const char* representing the Wi-Fi network name.
-*         If empty, returns "NULL".
-*/
-const char* WiFiConfig::getNetworkNameAsChr() {
-  return _networkName.isEmpty() ? "NULL" : _networkName.c_str();
+  return _networkName.c_str();
 }
 
 /**
 * @brief Get the configured Wi-Fi network password.
 * 
-* @return String representing the Wi-Fi network password.
+* @return const char* representing the Wi-Fi network password.
 *         If empty, returns "NULL".
+* 
+* @note The returned pointer is valid until the class instance is destroyed,
+*       or until the next call to a function that modifies the Wi-Fi network password.
 */
-String WiFiConfig::getNetworkPassAsStr() {
-  return _networkPass.isEmpty() ? "NULL" : _networkPass;
-}
+const char* WiFiConfig::getNetworkPass() {
+  if (_networkPass.isEmpty()) {
+    return "NULL";
+  }
 
-/**
-* @brief Get the network password as a const char*.
-*
-* @return Const char* representing the Wi-Fi network password.
-*         If empty, returns "NULL".
-*/
-const char* WiFiConfig::getNetworkPassAsChr() {
-  return _networkPass.isEmpty() ? "NULL" : _networkPass.c_str();
+  return _networkPass.c_str();
 }
 
 /**
 * @brief Get the configured MQTT server address.
 * 
-* @return String representing the MQTT server address.
+* @return const char* representing the MQTT server address.
 *         If empty, returns "NULL".
+* 
+* @note The returned pointer is valid until the class instance is destroyed,
+*       or until the next call to a function that modifies the MQTT server address.
 */
-String WiFiConfig::getMqttServerAddressAsStr() {
-  return _mqttServerAddress.isEmpty() ? "NULL" : _mqttServerAddress;
-}
+const char* WiFiConfig::getMqttServerAddress() {
+  if (_mqttServerAddress.isEmpty()) {
+    return "NULL";
+  }
 
-/**
-* @brief Get the MQTT server address as a const char*.
-*
-* @return Const char* representing the MQTT server address.
-*         If empty, returns "NULL".
-*/
-const char* WiFiConfig::getMqttServerAddressAsChr() {
-  return _mqttServerAddress.isEmpty() ? "NULL" : _mqttServerAddress.c_str();
+  return _mqttServerAddress.c_str();
 }
 
 /**
 * @brief Get the configured MQTT username.
 * 
-* @return String representing the MQTT username.
+* @return const char* representing the MQTT username.
 *         If empty, returns "NULL".
+* 
+* @note The returned pointer is valid until the class instance is destroyed,
+*       or until the next call to a function that modifies the MQTT username.
 */
-String WiFiConfig::getMqttUsernameAsStr() {
-  return _mqttUsername.isEmpty() ? "NULL" : _mqttUsername;
-}
+const char* WiFiConfig::getMqttUsername() {
+  if (_mqttUsername.isEmpty()) {
+    return "NULL";
+  }
 
-/**
-* @brief Get the MQTT username as a const char*.
-*
-* @return Const char* representing the MQTT username.
-*         If empty, returns "NULL".
-*/
-const char* WiFiConfig::getMqttUsernameAsChr() {
-  return _mqttUsername.isEmpty() ? "NULL" : _mqttUsername.c_str();
+  return _mqttUsername.c_str();
 }
 
 /**
 * @brief Get the configured MQTT password.
 * 
-* @return String representing the MQTT password.
+* @return const char* representing the MQTT password.
 *         If empty, returns "NULL".
+* 
+* @note The returned pointer is valid until the class instance is destroyed,
+*       or until the next call to a function that modifies the MQTT password.
 */
-String WiFiConfig::getMqttPassAsStr() {
-  return _mqttPass.isEmpty() ? "NULL" : _mqttPass;
-}
+const char* WiFiConfig::getMqttPass() {
+  if (_mqttPass.isEmpty()) {
+    return "NULL";
+  }
 
-/**
-* @brief Get the MQTT password as a const char*.
-*
-* @return Const char* representing the MQTT password.
-*         If empty, returns "NULL".
-*/
-const char* WiFiConfig::getMqttPassAsChr() {
-  return _mqttPass.isEmpty() ? "NULL" : _mqttPass.c_str();
+  return _mqttPass.c_str();
 }
 
 /**
 * @brief Get the configured MQTT client ID.
 * 
-* @return String representing the MQTT client ID.
+* @return const char* representing the MQTT client ID.
 *         If empty, returns "NULL".
+* 
+* @note The returned pointer is valid until the class instance is destroyed,
+*       or until the next call to a function that modifies the MQTT client ID.
 */
-String WiFiConfig::getMqttClientIdAsStr() {
-  return _mqttClientId.isEmpty() ? "NULL" : _mqttClientId;
-}
+const char* WiFiConfig::getMqttClientId() {
+  if (_mqttClientId.isEmpty()) {
+    return "NULL";
+  }
 
-/**
-* @brief Get the MQTT client ID as a const char*.
-*
-* @return Const char* representing the MQTT client ID.
-*         If empty, returns "NULL".
-*/
-const char* WiFiConfig::getMqttClientIdAsChr() {
-  return _mqttClientId.isEmpty() ? "NULL" : _mqttClientId.c_str();
+  return _mqttClientId.c_str();
 }
 
 /**
 * @brief Get the configured MQTT topic.
 * 
-* @return String representing the MQTT topic.
+* @return const char* representing the MQTT topic.
 *         If empty, returns "NULL".
+* 
+* @note The returned pointer is valid until the class instance is destroyed,
+*       or until the next call to a function that modifies the MQTT topic.
 */
-String WiFiConfig::getMqttTopicAsStr() {
-  return _mqttTopic.isEmpty() ? "NULL" : _mqttTopic;
-}
+const char* WiFiConfig::getMqttTopic() {
+  if (_mqttTopic.isEmpty()) {
+    return "NULL";
+  }
 
-/**
-* @brief Get the MQTT topic as a const char*.
-*
-* @return Const char* representing the MQTT topic.
-*         If empty, returns "NULL".
-*/
-const char* WiFiConfig::getMqttTopicAsChr() {
-  return _mqttTopic.isEmpty() ? "NULL" : _mqttTopic.c_str();
+  return _mqttTopic.c_str();
 }
 
 /**
@@ -575,7 +523,7 @@ const char* WiFiConfig::getMqttTopicAsChr() {
 *
 * @return The MQTT server port.
 */
-int WiFiConfig::getMqttServerPort() {
+uint16_t WiFiConfig::getMqttServerPort() {
   return _mqttServerPort;
 }
 

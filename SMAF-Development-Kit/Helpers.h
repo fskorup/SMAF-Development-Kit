@@ -53,6 +53,6 @@ extern MessageTypeEnum messageType;  // Declare the variable.
 * @param messageType The type of the message (CLR, ERR, SCS, CMD).
 * @param message The message to be printed.
 */
-void debug(byte messageType, String message);
+void debug(MessageTypeEnum messageType, const char *format, ...);
 
 #endif
