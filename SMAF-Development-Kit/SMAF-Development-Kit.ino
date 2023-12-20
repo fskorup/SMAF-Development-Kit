@@ -33,7 +33,7 @@
 #define ESP32_CORE_PRIMARY 0    // Numeric value representing the primary core.
 #define ESP32_CORE_SECONDARY 1  // Numeric value representing the secondary core.
 
-// Enum to represent different device statuses
+// Enum to represent different device statuses.
 enum DeviceStatusEnum : byte {
   NONE,             // Disable RGB led.
   NOT_READY,        // Device is not ready.

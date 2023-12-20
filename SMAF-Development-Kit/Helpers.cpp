@@ -32,14 +32,14 @@
 MessageTypeEnum messageType = LOG;
 
 /**
- * @brief Debugging function to print messages with different types.
- *
- * This function prints debug messages to the Serial monitor with a specified message type.
- *
- * @param messageType The type of the message (LOG, ERR, SCS, CMD).
- * @param format The format string for the message.
- * @param ... Additional arguments to be formatted.
- */
+* @brief Debugging function to print messages with different types.
+*
+* This function prints debug messages to the Serial monitor with a specified message type.
+*
+* @param messageType The type of the message (LOG, ERR, SCS, CMD).
+* @param format The format string for the message.
+* @param ... Additional arguments to be formatted.
+*/
 void debug(MessageTypeEnum messageType, const char *format, ...) {
   // Set up an empty string to store the message type as a string
   String messageTypeStr;
