@@ -23,11 +23,12 @@
 * THE SOFTWARE.
 */
 
-#include "Helpers.h"
 #include "WiFi.h"
 #include "WiFiConfig.h"
 #include "PubSubClient.h"
 #include "DeviceStatusVisualizer.h"
+#include "esp_task_wdt.h"
+#include "Helpers.h"
 
 // Define constants for ESP32 core numbers.
 #define ESP32_CORE_PRIMARY 0    // Numeric value representing the primary core.
@@ -92,6 +93,10 @@ void setup() {
 
   // Delay for 2400 milliseconds (2.4 seconds).
   delay(2400);
+
+  // Setup hardware Watchdog timer. Bark Bark.
+  esp_task_wdt_init(30, true);  // Enable panic so ESP32 restarts.
+  esp_task_wdt_add(NULL);       // Add current thread to WDT watch.
 
   // Print a formatted welcome message with build information.
   String buildVersion = "v0.002";
@@ -174,6 +179,9 @@ void loop() {
     mqtt.publish(config.getMqttTopic(), "Hello World!", true);
     debug(SCS, "Data sent to MQTT broker '%s' on topic '%s'.", config.getMqttServerAddress(), config.getMqttTopic());
   }
+
+  // Feed the dog (Watchdog timer).
+  esp_task_wdt_reset();
 
   // Delay before repeating the loop.
   delay(1600);
