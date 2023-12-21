@@ -40,17 +40,17 @@
 #include "Preferences.h"
 #include "Helpers.h"
 
-// Define constant strings for Wi-Fi network configuration
-#define NETWORK_NAME "netName"  // Wi-Fi network name
-#define NETWORK_PASS "netPass"  // Wi-Fi network password
+// Define constant strings for Wi-Fi network configuration.
+#define NETWORK_NAME "netName"  // Wi-Fi network name.
+#define NETWORK_PASS "netPass"  // Wi-Fi network password.
 
-// Define constant strings for MQTT configuration
-#define MQTT_SERVER_ADDRESS "mqttSrvAdr"  // MQTT server address
-#define MQTT_SERVER_PORT "mqttSrvPort"    // MQTT server port
-#define MQTT_USERNAME "mqttUser"          // MQTT username
-#define MQTT_PASS "mqttPass"              // MQTT password
-#define MQTT_CLIENT_ID "mqttClient"       // MQTT client ID
-#define MQTT_TOPIC "mqttTopic"            // MQTT topic
+// Define constant strings for MQTT configuration.
+#define MQTT_SERVER_ADDRESS "mqttSrvAdr"  // MQTT server address.
+#define MQTT_SERVER_PORT "mqttSrvPort"    // MQTT server port.
+#define MQTT_USERNAME "mqttUser"          // MQTT username.
+#define MQTT_PASS "mqttPass"              // MQTT password.
+#define MQTT_CLIENT_ID "mqttClient"       // MQTT client ID.
+#define MQTT_TOPIC "mqttTopic"            // MQTT topic.
 
 class WiFiConfig {
 public:
