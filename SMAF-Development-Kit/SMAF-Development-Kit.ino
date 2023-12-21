@@ -147,6 +147,9 @@ void setup() {
     debug(LOG, "SoftAP Password: '%s'.", config.getConfigNetworkPass());
     debug(LOG, "SoftAP Server IP address: '%s'.", config.getConfigServerIp());
     debug(LOG, "SoftAP Server port: '%d'.", config.getConfigServerPort());
+
+    // Disable WDT.
+    disableWatchdog();
   } else {
     // Set device status to Not Ready.
     deviceStatus = NOT_READY;
@@ -175,13 +178,13 @@ void loop() {
 
   // If the device is ready to send, publish a message to the MQTT broker.
   if (deviceStatus == READY_TO_SEND) {
-    debug(CMD, "Sending data to MQTT broker '%s' on topic '%s'.", config.getMqttServerAddress(), config.getMqttTopic());
+    debug(CMD, "Posting data to MQTT broker '%s' on topic '%s'.", config.getMqttServerAddress(), config.getMqttTopic());
     mqtt.publish(config.getMqttTopic(), "Hello World!", true);
-    debug(SCS, "Data sent to MQTT broker '%s' on topic '%s'.", config.getMqttServerAddress(), config.getMqttTopic());
+    debug(SCS, "Data posted to MQTT broker '%s' on topic '%s'.", config.getMqttServerAddress(), config.getMqttTopic());
   }
 
-  // Feed the dog (Watchdog timer).
-  esp_task_wdt_reset();
+  // Feed WDT.
+  feedWatchdog();
 
   // Delay before repeating the loop.
   delay(1600);
@@ -211,6 +214,9 @@ void connectToNetwork() {
     // Keep attempting to connect until successful.
     while (WiFi.status() != WL_CONNECTED) {
       debug(CMD, "Connecting device to '%s'.", config.getNetworkName());
+
+      // Feed WDT.
+      feedWatchdog();
 
       // Attempt to connect to the Wi-Fi network using configured credentials.
       WiFi.begin(config.getNetworkName(), config.getNetworkPass());
@@ -253,6 +259,9 @@ void connectToMqttBroker() {
     // Keep attempting to connect until successful.
     while (!mqtt.connected()) {
       debug(CMD, "Connecting device to MQTT broker '%s'.", config.getMqttServerAddress());
+
+      // Feed WDT.
+      feedWatchdog();
 
       if (mqtt.connect(config.getMqttClientId(), config.getMqttUsername(), config.getMqttPass())) {
         // Log successful connection and set device status.
@@ -307,4 +316,30 @@ void DeviceStatusThread(void* pvParameters) {
         break;
     }
   }
+}
+
+/**
+* @brief Feds the watchdog timer.
+*
+* This function resets the watchdog timer using esp_task_wdt_reset().
+*/
+void feedWatchdog() {
+    // Feed WDT.
+    esp_task_wdt_reset();
+
+    // Log the status in the terminal.
+    debug(LOG, "Watchdog fed.");
+}
+
+/**
+* @brief Disables the watchdog timer.
+*
+* This function disables the watchdog timer using esp_task_wdt_delete(NULL).
+*/
+void disableWatchdog() {
+    // Disable WDT.
+    esp_task_wdt_delete(NULL);
+
+    // Log the status in the terminal.
+    debug(LOG, "Watchdog suspended.");
 }
