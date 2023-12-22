@@ -299,7 +299,7 @@ void connectToNetwork() {
 
       // Attempt to connect to the Wi-Fi network using configured credentials.
       WiFi.begin(config.getNetworkName(), config.getNetworkPass());
-      delay(4000);
+      delay(6400);
 
       // Uncomment the following line to restart the ESP32 in case of persistent connection issues.
       // esp_restart();
