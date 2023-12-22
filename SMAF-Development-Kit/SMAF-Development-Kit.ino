@@ -101,13 +101,13 @@ void setup() {
   // Delay for 2400 milliseconds (2.4 seconds).
   delay(2400);
 
-  // Setup hardware Watchdog timer. Bark Bark.
-  initWatchdog(30, true);
-
   // Print a formatted welcome message with build information.
   String buildVersion = "v0.002";
   String buildDate = "January, 2024.";
   Serial.printf("\n\rSMAF-DEVELOPMENT-KIT, Crafted with love in Europe.\n\rBuild version: %s\n\rBuild date: %s\n\r\n\r", buildVersion.c_str(), buildDate.c_str());
+
+  // Setup hardware Watchdog timer. Bark Bark.
+  initWatchdog(30, true);
 
   // Create a new task (DeviceStatusThread) and assign it to the primary core (ESP32_CORE_PRIMARY).
   xTaskCreatePinnedToCore(
@@ -256,13 +256,13 @@ void loop() {
       debug(CMD, "Posting data to MQTT broker '%s' on topic '%s'.", config.getMqttServerAddress(), config.getMqttTopic());
       mqtt.publish(config.getMqttTopic(), mqttData.c_str(), true);
       debug(SCS, "Data posted to MQTT broker '%s' on topic '%s'.", config.getMqttServerAddress(), config.getMqttTopic());
-
-      // Reset WDT.
-      resetWatchdog();
     } else {
       deviceStatus = WAITING_GNSS;
       debug(ERR, "Device is not ready to post data, searching for GNSS signal.");
     }
+
+    // Reset WDT.
+    resetWatchdog();
   }
 
   // Delay before repeating the loop.
