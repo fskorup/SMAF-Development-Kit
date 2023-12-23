@@ -168,6 +168,9 @@ void setup() {
 
     // Set the I2C port to output UBX only (turn off NMEA noise).
     gnss.setI2COutput(COM_TYPE_UBX);
+
+    // Reset WDT.
+    resetWatchdog();
   }
 }
 
@@ -252,7 +255,6 @@ void loop() {
     if (fixStatus && latitude != 0 && longitude != 0) {
       deviceStatus = READY_TO_SEND;
       debug(SCS, "Device ready to post data, GNSS signal is locked. Data: '%s'.", mqttData.c_str());
-
       debug(CMD, "Posting data to MQTT broker '%s' on topic '%s'.", config.getMqttServerAddress(), config.getMqttTopic());
       mqtt.publish(config.getMqttTopic(), mqttData.c_str(), true);
       debug(SCS, "Data posted to MQTT broker '%s' on topic '%s'.", config.getMqttServerAddress(), config.getMqttTopic());

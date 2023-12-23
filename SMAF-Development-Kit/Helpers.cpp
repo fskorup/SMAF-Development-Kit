@@ -132,7 +132,6 @@ void suspendWatchdog() {
   debug(LOG, "Watchdog suspended.");
 }
 
-
 /**
 * @brief Adds a leading zero to a single-digit integer, converting it to a string.
 *
