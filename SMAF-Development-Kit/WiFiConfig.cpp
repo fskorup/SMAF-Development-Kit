@@ -263,7 +263,7 @@ void WiFiConfig::renderConfigPage() {
   html += "<p>Configure MQTT protocol settings, including the broker's address, port, and authentication details, to enable effective device communication.</p>";
   html += "<div class='frame-primary'>";
   html += "<div class='frame-secondary'><label for='" + String(MQTT_SERVER_ADDRESS) + "'>MQTT Server:</label><input id='" + String(MQTT_SERVER_ADDRESS) + "' type='text' name='" + String(MQTT_SERVER_ADDRESS) + "' value='" + _mqttServerAddress + "'></div>";
-  html += "<div class='frame-secondary'><label for='" + String(MQTT_SERVER_PORT) + "'>MQTT Port:</label><input id='" + String(MQTT_SERVER_PORT) + "' type='text' name='" + String(MQTT_SERVER_PORT) + "' value='" + String(_mqttServerPort) + "'></div>";
+  html += "<div class='frame-secondary'><label for='" + String(MQTT_SERVER_PORT) + "'>MQTT Port:</label><input id='" + String(MQTT_SERVER_PORT) + "' type='text' inputmode='numeric' pattern='[0-9]*' name='" + String(MQTT_SERVER_PORT) + "' value='" + String(_mqttServerPort) + "'></div>";
   html += "<div class='frame-secondary'><label for='" + String(MQTT_USERNAME) + "'>MQTT Username:</label><input id='" + String(MQTT_USERNAME) + "' type='text' name='" + String(MQTT_USERNAME) + "' value='" + _mqttUsername + "'></div>";
   html += "<div class='frame-secondary'><label for='" + String(MQTT_PASS) + "'>MQTT Password:</label><input id='" + String(MQTT_PASS) + "' type='text' name='" + String(MQTT_PASS) + "' value='" + _mqttPass + "'></div>";
   html += "</div>";
