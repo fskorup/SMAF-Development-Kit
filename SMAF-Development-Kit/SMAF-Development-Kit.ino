@@ -27,6 +27,7 @@
 #include "WiFiConfig.h"
 #include "PubSubClient.h"
 #include "DeviceStatusVisualizer.h"
+#include "PianoNotes.h"
 #include "Helpers.h"
 #include "Wire.h"
 #include "SparkFun_u-blox_GNSS_v3.h"
@@ -98,6 +99,17 @@ void setup() {
   // Start I2C.
   Wire.begin();
 
+  // Play intro tone on speaker.
+  tone(D3, NOTE_E6);
+  delay(160);
+  noTone(D3);
+  tone(D3, NOTE_F6);
+  delay(160);
+  noTone(D3);
+  tone(D3, NOTE_G6);
+  delay(320);
+  noTone(D3);
+
   // Delay for 2400 milliseconds (2.4 seconds).
   delay(2400);
 
@@ -141,7 +153,18 @@ void setup() {
   (!config.isConfigValid()) ? debug(ERR, "Preferences not valid.") : debug(SCS, "Preferences are valid.");
 
   // Check if SoftAP configuration server should be started.
-  if ((digitalRead(configurationButton) == HIGH) || (!config.isConfigValid())) {
+  if ((digitalRead(configurationButton) == LOW) || (!config.isConfigValid())) {
+    // Play intro tone on speaker.
+    tone(D3, NOTE_F6);
+    delay(160);
+    noTone(D3);
+    tone(D3, NOTE_F6);
+    delay(160);
+    noTone(D3);
+    tone(D3, NOTE_F6);
+    delay(320);
+    noTone(D3);
+
     // Set device status to Maintenance Mode.
     deviceStatus = MAINTENANCE_MODE;
 
@@ -245,7 +268,7 @@ void loop() {
     mqttData += addLeadingZero(gnss.getSecond());
     mqttData += addLeadingZero(gnss.getDay());
     mqttData += addLeadingZero(gnss.getMonth());
-    mqttData += "23";  //addLeadingZero(gnss.getYear());
+    mqttData += "24";  //addLeadingZero(gnss.getYear());
     mqttData += "\"";
     mqttData += "}";
 
