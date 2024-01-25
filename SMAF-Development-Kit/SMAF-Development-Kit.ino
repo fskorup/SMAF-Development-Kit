@@ -100,6 +100,7 @@ void setup() {
   Wire.begin();
 
   // Play intro tone on speaker.
+  // TODO: Make a function from this.
   tone(D3, NOTE_E6);
   delay(160);
   noTone(D3);
@@ -154,7 +155,8 @@ void setup() {
 
   // Check if SoftAP configuration server should be started.
   if ((digitalRead(configurationButton) == LOW) || (!config.isConfigValid())) {
-    // Play intro tone on speaker.
+    // Play configuration tone on speaker.
+    // TODO: Make a function from this.
     tone(D3, NOTE_F6);
     delay(160);
     noTone(D3);
@@ -268,7 +270,7 @@ void loop() {
     mqttData += addLeadingZero(gnss.getSecond());
     mqttData += addLeadingZero(gnss.getDay());
     mqttData += addLeadingZero(gnss.getMonth());
-    mqttData += "24";  //addLeadingZero(gnss.getYear());
+    mqttData += "24"; // TODO: gnss.getYear(); Clean this up. Year is returned like YYYY and we need it in YY format.
     mqttData += "\"";
     mqttData += "}";
 
