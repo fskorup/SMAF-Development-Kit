@@ -282,15 +282,16 @@ void loop() {
       debug(SCS, "Device ready to post data, GNSS signal is locked. Data: '%s'.", mqttData.c_str());
       debug(CMD, "Posting data to MQTT broker '%s' on topic '%s'.", config.getMqttServerAddress(), config.getMqttTopic());
       mqtt.publish(config.getMqttTopic(), mqttData.c_str(), true);
-      debug(SCS, "Data posted to MQTT broker '%s' on topic '%s'.", config.getMqttServerAddress(), config.getMqttTopic());
     } else {
       deviceStatus = WAITING_GNSS;
       debug(ERR, "Device is not ready to post data, searching for GNSS signal.");
     }
 
     // Reset WDT.
-    resetWatchdog();
+    // resetWatchdog();
   }
+
+  mqtt.loop();
 
   // Delay before repeating the loop.
   // delay(1600);
@@ -358,6 +359,7 @@ void connectToMqttBroker() {
     mqtt.setServer(config.getMqttServerAddress(), config.getMqttServerPort());
     // mqtt.setKeepAlive(30000);     // To be configured on the settings page.
     // mqtt.setSocketTimeout(4000);  // To be configured on the settings page.
+    mqtt.setCallback(callback);
 
     // Log an error if not connected.
     debug(ERR, "Device not connected to MQTT broker '%s'.", config.getMqttServerAddress());
@@ -372,6 +374,10 @@ void connectToMqttBroker() {
       if (mqtt.connect(config.getMqttClientId(), config.getMqttUsername(), config.getMqttPass())) {
         // Log successful connection and set device status.
         debug(SCS, "Device connected to MQTT broker '%s'.", config.getMqttServerAddress());
+
+        // Subscribe to MQTT topic.
+        mqtt.subscribe(config.getMqttTopic());
+
         deviceStatus = WAITING_GNSS;
       } else {
         // Retry after a delay if connection failed.
@@ -379,6 +385,13 @@ void connectToMqttBroker() {
       }
     }
   }
+}
+
+void callback(char* topic, byte* payload, unsigned int length) {
+  debug(SCS, "Data posted to MQTT broker '%s' on topic '%s'.", config.getMqttServerAddress(), config.getMqttTopic());
+
+  // Reset WDT.
+  resetWatchdog();
 }
 
 /**
