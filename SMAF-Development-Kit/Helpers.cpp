@@ -150,20 +150,6 @@ void suspendWatchdog() {
 }
 
 /**
-* @brief Adds a leading zero to a single-digit integer, converting it to a string.
-*
-* This function takes an integer value and converts it to a string. If the string
-* representation has only one digit, a leading zero is added. Otherwise, the original
-* string representation is returned.
-*
-* @param value The integer value to be converted.
-* @return A string representing the integer with a leading zero if it is a single digit.
-*/
-String addLeadingZero(int value) {
-  return (String(value).length() == 1) ? "0" + String(value) : String(value);
-}
-
-/**
 * @brief Check if a C-style string is empty.
 * 
 * @param str Pointer to the C-style string to check.

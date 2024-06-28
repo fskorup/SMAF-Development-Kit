@@ -136,11 +136,6 @@ void setup() {
   // Wire.setPins(SDA_PIN_NUMBER, SCL_PIN_NUMBER);
   Wire.setPins(1, 2);
 
-  // Start sensor and set precision and heater.
-  sht4.begin();
-  sht4.setPrecision(SHT4X_HIGH_PRECISION);
-  sht4.setHeater(SHT4X_NO_HEATER);
-
   // Set the pin mode for the configurationuration button to INPUT.
   pinMode(configurationurationButton, INPUT);
 
@@ -196,13 +191,13 @@ void setup() {
     // Set device status to Not Ready Mode.
     deviceStatus = NOT_READY;
 
-    // Start GNSS module.
+    // Start SHT4x module.
     while (!sht4.begin()) {
       debug(ERR, "SHT4x module not detected on I2C lines.");
       delay(800);
     }
 
-    // Log successful GNSS module initialization.
+    // Log successful SHT4x module initialization.
     debug(SCS, "SHT4x module detected on I2C lines.");
 
     // Set SHT4x precision and heater settings.
@@ -240,7 +235,7 @@ void loop() {
   sensors_event_t humidity, temp;
   sht4.getEvent(&humidity, &temp);
 
-  // debug(LOG, "Enviroment sensor reads temperature of %s degrees celsius with relative humidity at %s percent.", String(temp.temperature, 1), String(humidity.relative_humidity, 1));
+  debug(LOG, "Enviroment sensor reads temperature of %s degrees celsius with relative humidity at %s percent.", String(temp.temperature, 2), String(humidity.relative_humidity, 2));
 
   // Store MQTT data here.
   String mqttData = String();
