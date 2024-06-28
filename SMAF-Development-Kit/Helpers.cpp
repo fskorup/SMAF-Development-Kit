@@ -88,8 +88,25 @@ void debug(MessageTypeEnum messageType, const char *format, ...) {
 *              reset without causing a restart.
 */
 void initWatchdog(uint32_t timeout, bool panic) {
+// Check if the ESP32 core version is 3.0.0 or lower.
+// ESP32 Core changed initialization methods for watchdog timers in version 3.0.0 or higher.
+#if (VERSION_CHECK(ESP_ARDUINO_VERSION_MAJOR, ESP_ARDUINO_VERSION_MINOR, ESP_ARDUINO_VERSION_PATCH) < VERSION_CHECK(3, 0, 0))
+  // ESP32 Arduino Core < 3.0
+  // Initialize the watchdog.
   esp_task_wdt_init(timeout, panic);
-  esp_task_wdt_add(NULL);  // Add current thread to WDT watch.
+  esp_task_wdt_add(NULL);
+#else
+  // ESP32 Arduino Core >= 3.0
+  // Define the configuration structure.
+  esp_task_wdt_config_t config = {
+    .timeout_ms = timeout * 1000,  // Timeout
+    .trigger_panic = panic         // Trigger panic if watchdog timer is not reset
+  };
+
+  // Initialize the watchdog timer with the configuration structure.
+  esp_task_wdt_reconfigure(&config);
+  esp_task_wdt_add(NULL);
+#endif
 
   // Log the status in the terminal.
   debug(LOG, "Watchdog timer intialized.");
@@ -144,4 +161,27 @@ void suspendWatchdog() {
 */
 String addLeadingZero(int value) {
   return (String(value).length() == 1) ? "0" + String(value) : String(value);
+}
+
+/**
+* @brief Check if a C-style string is empty.
+* 
+* @param str Pointer to the C-style string to check.
+* 
+* @return true if the string is empty (either a null pointer or the first character is '\0'), false otherwise.
+*/
+bool isEmpty(const char* str) {
+  return str == nullptr || str[0] == '\0';
+}
+
+/**
+* @brief Encloses the given string within double quotes.
+*
+* This function takes a string `data` and returns it enclosed within double quotes.
+*
+* @param data The string to be enclosed within double quotes.
+* @return A String containing the input `data` enclosed within double quotes.
+*/
+String quotation(String data) {
+  return "\"" + data + "\"";
 }

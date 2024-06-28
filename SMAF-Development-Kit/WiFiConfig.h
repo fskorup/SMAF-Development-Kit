@@ -45,12 +45,18 @@
 #define NETWORK_PASS "netPass"  // Wi-Fi network password.
 
 // Define constant strings for MQTT configuration.
-#define MQTT_SERVER_ADDRESS "mqttSrvAdr"  // MQTT server address.
-#define MQTT_SERVER_PORT "mqttSrvPort"    // MQTT server port.
-#define MQTT_USERNAME "mqttUser"          // MQTT username.
-#define MQTT_PASS "mqttPass"              // MQTT password.
-#define MQTT_CLIENT_ID "mqttClient"       // MQTT client ID.
-#define MQTT_TOPIC "mqttTopic"            // MQTT topic.
+#define MQTT_SERVER_ADDRESS "mqttSrvAdr"    // MQTT server address.
+#define MQTT_SERVER_PORT "mqttSrvPort"      // MQTT server port.
+#define MQTT_USERNAME "mqttUser"            // MQTT username.
+#define MQTT_PASS "mqttPass"                // MQTT password.
+#define MQTT_CLIENT_ID "mqttClient"         // MQTT client ID.
+#define MQTT_TOPIC "mqttTopic"              // MQTT topic.
+#define AUDIO_NOTIFICATIONS "audioNotif"    // Audio Notifications status.
+#define VISUAL_NOTIFICATIONS "visualNotif"  // Visual Notifications status.
+
+// Define read/write modes for preferences.
+#define READ_WRITE_MODE false
+#define READ_ONLY_MODE true
 
 class WiFiConfig {
 public:
@@ -76,51 +82,7 @@ public:
   * @note Ensure that the SoftAP configuration server instance has been initialized
   *       before calling this method.
   */
-  void startConfig();
-
-  /**
-  * @brief Get the configured network name for SoftAP.
-  * 
-  * @return const char* representing the configured network name.
-  *         If empty, returns "NULL".
-  * 
-  * @note The returned pointer is valid until the class instance is destroyed,
-  *       or until the next call to a function that modifies the network name.
-  */
-  const char* getConfigNetworkName();
-
-  /**
-  * @brief Get the configured network password for SoftAP.
-  * 
-  * @return const char* representing the configured network password.
-  *         If empty, returns "NULL".
-  * 
-  * @note The returned pointer is valid until the class instance is destroyed,
-  *       or until the next call to a function that modifies the network password.
-  */
-  const char* getConfigNetworkPass();
-
-  /**
-  * @brief Get the IP address of the SoftAP.
-  * 
-  * @return const char* representing the IP address of the SoftAP.
-  *         If empty, returns "0.0.0.0".
-  * 
-  * @note The returned pointer is valid until the class instance is destroyed,
-  *       or until the next call to a function that modifies the SoftAP IP address.
-  *       It is recommended to avoid modifying the returned pointer directly.
-  *       If dynamic memory allocation is a concern, consider using a static buffer.
-  */
-  const char* getConfigServerIp();
-
-  /**
-  * @brief Get the configured configuration server port.
-  * 
-  * @return uint16_t representing the configuration server port.
-  * 
-  * @note The returned port value is valid for the lifetime of the class instance.
-  */
-  uint16_t getConfigServerPort();
+  void startConfiguration();
 
   /**
   * @brief Render the configuration page for device setup.
@@ -130,16 +92,7 @@ public:
   * 
   * @note The HTML structure and styling are included for presentation purposes.
   */
-  void renderConfigPage();
-
-  /**
-  * @brief Save Wi-Fi and MQTT configuration preferences.
-  *
-  * This method stores the current configuration parameters to non-volatile storage
-  * using the Preferences library. It saves Wi-Fi network name, password, MQTT server
-  * address, port, username, password, client ID, and topic for future use.
-  */
-  void savePreferences();
+  void renderConfigurationPage();
 
   /**
   * @brief Load Wi-Fi and MQTT configuration preferences.
@@ -149,7 +102,7 @@ public:
   * port, username, password, client ID, and topic. After loading, it checks if all
   * essential configuration parameters are non-empty and valid to determine the
   */
-  void loadPreferences();
+  bool loadPreferences();
 
   /**
   * @brief Clear all preferences within a specific namespace.
@@ -158,13 +111,6 @@ public:
   * effectively resetting them to their default values.
   */
   void clearPreferences();
-
-  /**
-  * @brief Check if the Wi-Fi configuration is valid.
-  *
-  * @return True if the configuration is valid, false otherwise.
-  */
-  bool isConfigValid();
 
   /**
   * @brief Get the configured Wi-Fi network name.
@@ -244,6 +190,26 @@ public:
   const char* getMqttTopic();
 
   /**
+  * @brief Get the status of audio notifications.
+  * 
+  * @return bool representing the status of audio notifications.
+  *         Returns true if audio notifications are enabled, false otherwise.
+  * 
+  * @note The returned value is cached after the first call and remains the same for subsequent calls.
+  */
+  bool getAudioNotificationsStatus();
+
+  /**
+  * @brief Get the status of visual notifications.
+  * 
+  * @return bool representing the status of visual notifications.
+  *         Returns true if visual notifications are enabled, false otherwise.
+  * 
+  * @note The returned value is cached after the first call and remains the same for subsequent calls.
+  */
+  bool getVisualNotificationsStatus();
+
+  /**
   * @brief Get the MQTT server port.
   *
   * @return The MQTT server port.
@@ -262,18 +228,143 @@ private:
   // Preferences namespace.
   const char* _preferencesNamespace;
 
-  // Network and MQTT configuration parameters.
-  String _networkName;           // Wi-Fi network name.
-  String _networkPass;           // Wi-Fi network password.
-  String _mqttServerAddress;     // MQTT server address.
-  String _mqttUsername;          // MQTT username.
-  String _mqttPass;              // MQTT password.
-  String _mqttClientId;          // MQTT client ID.
-  String _mqttTopic;             // MQTT topic.
-  uint16_t _mqttServerPort = 0;  // MQTT server port.
+  /**
+  * @brief Get the configured network name for SoftAP.
+  * 
+  * @return const char* representing the configured network name.
+  *         If empty, returns "NULL".
+  * 
+  * @note The returned pointer is valid until the class instance is destroyed,
+  *       or until the next call to a function that modifies the network name.
+  */
+  const char* getConfigNetworkName();
 
-  // Flag indicating whether the configuration is valid.
-  bool _isConfigValid;
+  /**
+  * @brief Get the configured network password for SoftAP.
+  * 
+  * @return const char* representing the configured network password.
+  *         If empty, returns "NULL".
+  * 
+  * @note The returned pointer is valid until the class instance is destroyed,
+  *       or until the next call to a function that modifies the network password.
+  */
+  const char* getConfigNetworkPass();
+
+  /**
+  * @brief Get the IP address of the SoftAP.
+  * 
+  * @return const char* representing the IP address of the SoftAP.
+  *         If empty, returns "0.0.0.0".
+  * 
+  * @note The returned pointer is valid until the class instance is destroyed,
+  *       or until the next call to a function that modifies the SoftAP IP address.
+  *       It is recommended to avoid modifying the returned pointer directly.
+  *       If dynamic memory allocation is a concern, consider using a static buffer.
+  */
+  const char* getConfigServerIp();
+
+  /**
+  * @brief Get the configured configuration server port.
+  * 
+  * @return uint16_t representing the configuration server port.
+  * 
+  * @note The returned port value is valid for the lifetime of the class instance.
+  */
+  uint16_t getConfigServerPort();
+
+  /**
+  * @brief Scan for available Wi-Fi networks and return them in HTML option format.
+  * 
+  * @return String containing the HTML option elements for each available network.
+  *         If no networks are found, an empty string is returned.
+  * 
+  * @note The function scans for Wi-Fi networks, formats them as HTML option elements,
+  *       and returns the resulting string. It also frees memory used for the scan results
+  *       after processing.
+  */
+  String scanNetworks();
+
+  /**
+  * @brief Load a string value from the preferences storage.
+  * 
+  * @param key The key associated with the string value to be loaded.
+  * 
+  * @return String containing the value associated with the specified key.
+  *         If the key does not exist, "Unknown" is stored and returned.
+  *         If the loading fails, a default value is returned.
+  * 
+  * @note The function initializes a Preferences instance with the specified namespace,
+  *       checks if the key exists, stores a default value if it does not, loads the value,
+  *       and ends the preferences session. If loading fails, an error message is logged
+  *       and a default value is returned.
+  */
+  String loadString(const char* key);
+
+  /**
+  * @brief Save a string value to the specified key in the preferences namespace.
+  * 
+  * @param key The key to which the string value will be saved.
+  * @param value The string value to save.
+  * 
+  * @note This function creates a Preferences instance, attempts to save the value associated 
+  *       with the given key, and ensures the Preferences session is properly ended. If saving 
+  *       fails, an error message is logged.
+  */
+  void saveString(const char* key, String value);
+
+  /**
+  * @brief Load an integer value from the specified key in the preferences namespace.
+  * 
+  * @param key The key for the integer value to load.
+  * 
+  * @return uint16_t containing the value associated with the key.
+  *         If the key does not exist, initializes it with a default value of 0 and returns 0.
+  *         If loading fails, returns 0.
+  * 
+  * @note This function creates a Preferences instance, attempts to load the value associated 
+  *       with the given key, and ensures the Preferences session is properly ended. If the key 
+  *       does not exist, it initializes the key with a default value of 0.
+  */
+  uint16_t loadInt(const char* key);
+
+  /**
+  * @brief Save an integer value to the specified key in the preferences namespace.
+  * 
+  * @param key The key to which the integer value will be saved.
+  * @param value The integer value to save.
+  * 
+  * @note This function creates a Preferences instance, attempts to save the value associated 
+  *       with the given key, and ensures the Preferences session is properly ended. If saving 
+  *       fails, an error message is logged.
+  */
+  void saveInt(const char* key, uint16_t value);
+
+  /**
+  * @brief Load a boolean value from the specified key in the preferences namespace.
+  * 
+  * @param key The key for the boolean value to load.
+  * 
+  * @return bool containing the value associated with the key.
+  *         If the key does not exist, initializes it with a default value of true and returns true.
+  *         If loading fails, returns false.
+  * 
+  * @note This function creates a Preferences instance, attempts to load the value associated 
+  *       with the given key, and ensures the Preferences session is properly ended. If the key 
+  *       does not exist, it initializes the key with a default value of true.
+  */
+  bool loadBool(const char* key);
+
+  /**
+  * @brief Save a boolean value to the specified key in the preferences namespace.
+  * 
+  * @param key The key to which the boolean value will be saved.
+  * @param value The boolean value to save.
+  * 
+  * @note This function creates a Preferences instance, attempts to save the value associated 
+  *       with the given key, and ensures the Preferences session is properly ended. If saving 
+  *       fails, an error message is logged.
+  */
+  void saveBool(const char* key, bool value);
 
   /**
   * @brief Parse and extract the value of a field from a URL-encoded String.

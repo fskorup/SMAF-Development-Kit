@@ -30,6 +30,10 @@
 
 #include "Arduino.h"
 #include "esp_task_wdt.h"
+#include "esp_system.h"
+
+// Define a macro for comparing version numbers
+#define VERSION_CHECK(major, minor, patch) ((major)*10000 + (minor)*100 + (patch))
 
 /**
 * @enum messageTypeEnum
@@ -106,5 +110,24 @@ void suspendWatchdog();
 * @return A string representing the integer with a leading zero if it is a single digit.
 */
 String addLeadingZero(int value);
+
+/**
+* @brief Check if a C-style string is empty.
+* 
+* @param str Pointer to the C-style string to check.
+* 
+* @return true if the string is empty (either a null pointer or the first character is '\0'), false otherwise.
+*/
+bool isEmpty(const char* str);
+
+/**
+* @brief Encloses the given string within double quotes.
+*
+* This function takes a string `data` and returns it enclosed within double quotes.
+*
+* @param data The string to be enclosed within double quotes.
+* @return A String containing the input `data` enclosed within double quotes.
+*/
+String quotation(String data);
 
 #endif

@@ -67,7 +67,7 @@ WiFiConfig::WiFiConfig(const char* configNetworkName, const char* configNetworkP
 * @note Ensure that the SoftAP configuration server instance has been initialized
 *       before calling this method.
 */
-void WiFiConfig::startConfig() {
+void WiFiConfig::startConfiguration() {
   // Start SoftAP with the specified network name and password.
   WiFi.softAP(_configNetworkName, _configNetworkPass);
 
@@ -76,7 +76,501 @@ void WiFiConfig::startConfig() {
 
   // Begin the configuration server instance.
   _configServerInstance.begin();
+
+  // Display SoftAP information.
+  debug(CMD, "Starting configuration server.");
+  debug(SCS, "SoftAP configuration server started. Use the credentials below to enter configuration mode.");
+  debug(LOG, "SoftAP Name: '%s'.", getConfigNetworkName());
+  debug(LOG, "SoftAP Password: '%s'.", getConfigNetworkPass());
+  debug(LOG, "SoftAP Server IP address: '%s'.", getConfigServerIp());
+  debug(LOG, "SoftAP Server port: '%d'.", getConfigServerPort());
 }
+
+/**
+* @brief Render the configuration page for device setup.
+* 
+* This function serves an HTML configuration page to the connected client.
+* It processes the form submission and saves the configuration settings.
+* 
+* @note The HTML structure and styling are included for presentation purposes.
+*/
+void WiFiConfig::renderConfigurationPage() {
+  // Check if a client has connected.
+  WiFiClient client = _configServerInstance.accept();
+
+  if (!client) {
+    return;  // No client, exit the loop.
+  }
+
+  // Wait until the client sends some data.
+  while (!client.available()) {
+    delay(10);
+  }
+
+  // Read the first line of the request.
+  String request = client.readStringUntil('\r');
+  //client.flush();
+
+  /**
+  * @note THIS WILL BE UPDATED IN FUTURE VERSION.
+  */
+  // Serve the HTML page.
+  String html = String();
+
+  html += "<!DOCTYPE html>";
+  html += "<html lang=\"en\">";
+  html += "<head>";
+  html += "<meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, user-scalable=no\">";
+  html += "<title>SMAF-DK-SAP</title>";
+  html += "<script> function refreshScan() {window.location.href = '/refresh';} </script>";
+  html += "<style>";
+  html += ":root {";
+  html += "--monochrome-100: hsl(210, 10%, 10%); --monochrome-125: hsl(210, 10%, 50%); --monochrome-150: hsl(210, 10%, 70%); --monochrome-200: hsl(210, 10%, 85%); --monochrome-250: hsl(210, 10%, 95%); --monochrome-300: hsl(0, 0%, 100%);";
+  html += "--info-50: hsl(210, 100%, 20%); --info-75: hsl(210, 100%, 35%); --info-100: hsl(210, 100%, 50%); --info-200: hsl(210, 100%, 95%);";
+  html += "--success-50: hsl(130, 100%, 15%); --success-75: hsl(130, 100%, 25%); --success-100: hsl(130, 100%, 40%); --success-200: hsl(130, 100%, 95%);";
+  html += "--error-50: hsl(0, 100%, 24%); --error-75: hsl(0, 100%, 35%); --error-100: hsl(0, 100%, 60%); --error-200: hsl(0, 100%, 97%);";
+  html += "}";
+  html += "* {font-family: system-ui, sans-serif; font-size: 16px; line-height: 1.5; color: var(--monochrome-100); margin: 0; padding: 0; box-sizing: border-box; outline: none; list-style: none; word-wrap: break-words; cursor: default;}";
+  html += "body {display: flex;flex-direction: column;flex-wrap: nowrap;align-items: center;padding: 1.5rem 1.5rem 8rem;}";
+  html += "h1, h2, h3, h4, h5, h6 {color: inherit; line-height: 1.15; margin-top: 3.5rem; margin-bottom: 1rem; font-weight: 700; letter-spacing: -0.2px}";
+  html += "h1 {font-size: 2.027rem; font-weight: 700;}";
+  html += "h2 {font-size: 1.802rem;}";
+  html += "h3 {font-size: 1.602rem;}";
+  html += "h4 {font-size: 1.424rem;}";
+  html += "h5 {font-size: 1.266rem; margin-bottom: 0.5rem;}";
+  html += "h6 {font-size: 1.125rem; margin-bottom: 0.5rem;}";
+  html += "p {color: inherit; margin-top: 1rem; margin-bottom: 1rem;}";
+  html += "label {font-weight: 500;}";
+  html += "form {max-width: 460px;}";
+  html += "input[type='text'], input[type='submit'], input[type='reset'], select, input[type='checkbox'], button {all: unset;}";
+  html += "input[type='text'], select {font-family: monospace, sans-serif; padding: 0.75rem 1rem; box-shadow: 0 0 0 1px var(--monochrome-200) inset; cursor: text;}";
+  html += "input[type='text']:hover, select:hover {box-shadow: 0 0 0 2px var(--monochrome-200) inset;}";
+  html += "input[type='text']:focus, select:focus {box-shadow: 0 0 0 2px var(--info-100) inset;}";
+  html += "input[type='submit'], input[type='reset'], button {font-weight: 500; cursor: pointer; padding: 1rem 1.5rem; flex-grow: 2; text-align: center;}";
+  html += "input[type='submit'] {background: var(--info-100); color: var(--monochrome-300);}";
+  html += "input[type='reset'], button {box-shadow: 0 0 0 1px var(--monochrome-200) inset; flex-shrink: 2; flex-grow: 1;}";
+  html += "input[type='submit']:hover {background: var(--info-75);}";
+  html += "input[type='submit']:active {background: var(--info-50);}";
+  html += "input[type='reset']:hover, button:hover {box-shadow: 0 0 0 2px var(--monochrome-200) inset;}";
+  html += "input[type='reset']:active, button:active {box-shadow: 0 0 0 2px var(--monochrome-200) inset; background: var(--monochrome-250);}";
+  html += ".horizontal-frame {display: flex; flex-wrap: wrap; flex-direction: row; gap: 1.0rem; margin-top: 1.0rem;}";
+  html += "section {border-left: 3px solid var(--info-100); background: var(--info-200); color: var(--info-50); padding: 1rem 1.25rem; margin: 1.5rem 0rem;}";
+  html += "section.success {border-left: 3px solid var(--success-100); background: var(--success-200); color: var(--success-50);}";
+  html += "section p {margin: 0; padding: 0;}";
+  html += "section h6 {margin-top: 0;}";
+  html += ".frame {display: flex; flex-direction: column; gap: 1.5rem; margin-top: 1.5rem;}";
+  html += ".input-frame {display: flex; flex-direction: column; gap: 0.25rem;}";
+  html += ".checkbox-frame {display: flex; flex-direction: row; justify-content: space-between; align-content: center; align-items: center; gap: 0.5rem;}";
+  html += ".switch {position: relative; display: flex; flex-shrink: 0; width: 40px; height: 24px;}";
+  html += ".track {cursor: pointer; display: flex; justify-content: flex-start; align-items: center; background-color: var(--monochrome-200); box-shadow: 0 0 0 3px var(--monochrome-200); width: 100%; height: 100%; border-radius: 100px;}";
+  html += ".track:hover {background-color: var(--monochrome-150); box-shadow: 0 0 0 3px var(--monochrome-150);}";
+  html += ".track:active {background-color: var(--monochrome-125); box-shadow: 0 0 0 3px var(--monochrome-125);}";
+  html += ".thumb {display: flex; justify-content: center; align-items: center; width: 24px; height: 24px; pointer-events: none; border-radius: 100%; box-shadow: 0 0 0 9.5px var(--monochrome-300) inset;}";
+  html += "input:checked + .track {background-color: var(--info-100); box-shadow: 0 0 0 3px var(--info-100); justify-content: flex-end;}";
+  html += "input:checked + .track:hover {background-color: var(--info-75); box-shadow: 0 0 0 3px var(--info-75);}";
+  html += "input:checked + .track:active {background-color: var(--info-50); box-shadow: 0 0 0 3px var(--info-50);}";
+  html += ".h1-override {margin-top: 1.5rem; margin-bottom: 1.5rem;}";
+  html += ".fake-link {text-decoration: underline; color: var(--info-100); font-weight: 500; cursor: pointer;}";
+  html += "em {all: unset; color: var(--error-100); font-weight: 500;}";
+  html += "</style>";
+  html += "</head>";
+  html += "<body>";
+
+  html += "<form action='/configuration' method='get'>";
+  html += "<h1>🤙</h1>";
+  html += "<h1 class=\"h1-override\">Ready to update<br>your settings?</h1>";
+  html += "<p>Welcome to SMAF Config Hub! Quickly set up your SMAF device to connect via WiFi and transmit data using MQTT.</p>";
+
+  // Check if the request is a form submission and save preferences.
+  if (request.indexOf("/configuration") != -1) {
+    // Display a success message with the saved configuration.
+    html += "<section class='success' style=\"display: block;\">";
+    html += "<h6>Success!</h6>";
+    html += "<p>Your SMAF device has successfully absorbed the new configuration. It's now all set to rock and roll with the updated settings.</p>";
+    html += "</section>";
+  }
+
+  html += "<h4>WiFi router<br>configuration</h4>";
+  html += "<p>Secure connectivity by entering your WiFi details - SSID and password. SMAF stays linked to the network for seamless operation.</p>";
+  html += "<p class=\"fake-link\" onclick=\"refreshScan()\">Refresh network list</p>";
+  html += "<div class=\"frame\">";
+  html += "<div class=\"input-frame\">";
+  html += "<label for='" + String(NETWORK_NAME) + "'>Select SSID<em>*</em></label>";
+  html += "<select id='" + String(NETWORK_NAME) + "' type='text' name='" + String(NETWORK_NAME) + "' required>";
+
+  html += scanNetworks();
+
+  html += "</select>";
+  html += "</div>";
+  html += "<div class=\"input-frame\">";
+  html += "<label for='" + String(NETWORK_PASS) + "'>SSID Password<em>*</em></label>";
+  html += "<input id='" + String(NETWORK_PASS) + "' type='text' name='" + String(NETWORK_PASS) + "' value='" + getNetworkPass() + "' required>";
+  html += "</div>";
+  html += "</div>";
+  html += "<h4>MQTT server<br>configuration</h4>";
+  html += "<p>Tune communication with MQTT server settings. Enter the broker's address, port, and authentication details for a robust connection.</p>";
+  html += "<div class=\"frame\">";
+  html += "<div class=\"input-frame\">";
+  html += "<label for='" + String(MQTT_SERVER_ADDRESS) + "'>MQTT Server<em>*</em></label>";
+  html += "<input id='" + String(MQTT_SERVER_ADDRESS) + "' type='text' name='" + String(MQTT_SERVER_ADDRESS) + "' value='" + getMqttServerAddress() + "' required>";
+  html += "</div>";
+  html += "<div class=\"input-frame\">";
+  html += "<label for='" + String(MQTT_SERVER_PORT) + "'>MQTT Port<em>*</em></label>";
+  html += "<input id='" + String(MQTT_SERVER_PORT) + "' type='text' inputmode='numeric' pattern='[0-9]*' name='" + String(MQTT_SERVER_PORT) + "' value='" + String(getMqttServerPort()) + "' required>";
+  html += "</div>";
+  html += "<div class=\"input-frame\">";
+  html += "<label for='" + String(MQTT_USERNAME) + "'>MQTT Username<em>*</em></label>";
+  html += "<input id='" + String(MQTT_USERNAME) + "' type='text' name='" + String(MQTT_USERNAME) + "' value='" + getMqttUsername() + "' required>";
+  html += "</div>";
+  html += "<div class=\"input-frame\">";
+  html += "<label for='" + String(MQTT_PASS) + "'>MQTT Password<em>*</em></label>";
+  html += "<input id='" + String(MQTT_PASS) + "' type='text' name='" + String(MQTT_PASS) + "' value='" + getMqttPass() + "' required>";
+  html += "</div>";
+  html += "</div>";
+  html += "<h4>MQTT client & topic<br>configuration</h4>";
+  html += "<p>Personalize MQTT settings for SMAF by defining client specifics and choosing an optimal topic. Seamless communication is just a click away.</p>";
+  html += "<div class=\"frame\">";
+  html += "<div class=\"input-frame\">";
+  html += "<label for='" + String(MQTT_CLIENT_ID) + "'>MQTT Client ID<em>*</em></label>";
+  html += "<input id='" + String(MQTT_CLIENT_ID) + "' type='text' name='" + String(MQTT_CLIENT_ID) + "' value='" + getMqttClientId() + "' required>";
+  html += "</div>";
+  html += "<div class=\"input-frame\">";
+  html += "<label for='" + String(MQTT_TOPIC) + "'>MQTT Topic<em>*</em></label>";
+  html += "<input id='" + String(MQTT_TOPIC) + "' type='text' name='" + String(MQTT_TOPIC) + "' value='" + getMqttTopic() + "' required>";
+  html += "</div>";
+  html += "</div>";
+  html += "<h4>Audio/Visual<br>notifications</h4>";
+  html += "<p>Your device is equipped with a buzzer and two RGB LEDs to show various statuses of connection. You can enable or disable those if you are irritated by the power of the LEDs or the sound of the buzzer.</p>";
+  html += "<div class=\"frame\">";
+  html += "<div class=\"checkbox-frame\">";
+  html += "<label for='" + String(AUDIO_NOTIFICATIONS) + "'>Enable audio notifications</label>";
+  html += "<label class=\"switch\">";
+  html += "<input id='" + String(AUDIO_NOTIFICATIONS) + "' type=\"checkbox\" name='" + String(AUDIO_NOTIFICATIONS) + "' value=\"true\"" + (getAudioNotificationsStatus() ? "Checked" : "") + ">";
+  html += "<div class=\"track\">";
+  html += "<div class=\"thumb\"></div>";
+  html += "</div>";
+  html += "</label>";
+  html += "</div>";
+  html += "<div class=\"checkbox-frame\">";
+  html += "<label for='" + String(VISUAL_NOTIFICATIONS) + "'>Enable visual notifications</label>";
+  html += "<label class=\"switch\">";
+  html += "<input id='" + String(VISUAL_NOTIFICATIONS) + "' type=\"checkbox\" name='" + String(VISUAL_NOTIFICATIONS) + "' value=\"true\"" + (getVisualNotificationsStatus() ? "Checked" : "") + ">";
+  html += "<div class=\"track\">";
+  html += "<div class=\"thumb\"></div>";
+  html += "</div>";
+  html += "</label>";
+  html += "</div>";
+  html += "</div>";
+  html += "<h4>Finish<br>configuration</h4>";
+  html += "<p>Ready to roll? Click \"Upload Configuration\" to apply changes, and SMAF will initiate its own reset to seamlessly implement the updated settings.</p>";
+  html += "<section class='info'>";
+  html += "<p>Note: Ensure all necessary data is entered correctly; SMAF won't connect or transmit data if something with the data is wrong.</p>";
+  html += "</section>";
+  html += "<div class=\"horizontal-frame\">";
+  html += "<input type=\"reset\" value=\"Reset form\">";
+  html += "<input type=\"submit\" value=\"Upload configuration\">";
+  html += "</div>";
+  html += "</form>";
+  html += "</body>";
+  html += "</html>";
+
+  // Send the response to the client.
+  client.println("HTTP/1.1 200 OK");
+  client.println("Content-Type: text/html");
+  client.println("Connection: close");
+  client.println();
+  client.println(html);
+
+
+  // Check if the request is a form submission and save preferences.
+  if (request.indexOf("/configuration") != -1) {
+    // Show debug message.
+    debug(CMD, "Saving preferences to '%s' namespace.", _preferencesNamespace);
+
+    // Save preferences.
+    saveString(NETWORK_NAME, parseFieldValue(request, NETWORK_NAME));
+    saveString(NETWORK_PASS, parseFieldValue(request, NETWORK_PASS));
+    saveString(MQTT_SERVER_ADDRESS, parseFieldValue(request, MQTT_SERVER_ADDRESS));
+    saveInt(MQTT_SERVER_PORT, stringToUint16(parseFieldValue(request, MQTT_SERVER_PORT)));
+    saveString(MQTT_USERNAME, parseFieldValue(request, MQTT_USERNAME));
+    saveString(MQTT_PASS, parseFieldValue(request, MQTT_PASS));
+    saveString(MQTT_CLIENT_ID, parseFieldValue(request, MQTT_CLIENT_ID));
+    saveString(MQTT_TOPIC, parseFieldValue(request, MQTT_TOPIC));
+
+    if (parseFieldValue(request, AUDIO_NOTIFICATIONS).isEmpty()) {
+      saveBool(AUDIO_NOTIFICATIONS, false);
+    } else {
+      saveBool(AUDIO_NOTIFICATIONS, true);
+    }
+
+    if (parseFieldValue(request, VISUAL_NOTIFICATIONS).isEmpty()) {
+      saveBool(VISUAL_NOTIFICATIONS, false);
+    } else {
+      saveBool(VISUAL_NOTIFICATIONS, true);
+    }
+
+    // Show debug message.
+    debug(SCS, "Saving preferences to '%s' namespace done.", _preferencesNamespace);
+    debug(CMD, "Restarting device to apply preferences.");
+
+    // Short delay before restart.
+    delay(2400);
+
+    // Uncomment the following line if a device restart is desired after saving preferences.
+    ESP.restart();
+  }
+}
+
+/**
+* @brief Load Wi-Fi and MQTT configuration preferences.
+*
+* This method reads configuration parameters from non-volatile storage using the
+* Preferences library. It loads Wi-Fi network name, password, MQTT server address,
+* port, username, password, client ID, and topic. After loading, it checks if all
+* essential configuration parameters are non-empty and valid to determine the
+* overall configuration validity.
+*/
+bool WiFiConfig::loadPreferences() {
+  // Show debug message.
+  debug(CMD, "Loading preferences from '%s' namespace.", _preferencesNamespace);
+
+  // Load all preferences to variables.
+  static const char* networkName = getNetworkName();
+  static const char* networkPass = getNetworkPass();
+  static const char* mqttServerAddress = getMqttServerAddress();
+  static const char* mqttUsername = getMqttUsername();
+  static const char* mqttPass = getMqttPass();
+  static const char* mqttClientId = getMqttClientId();
+  static const char* mqttTopic = getMqttTopic();
+  static uint16_t mqttServerPort = getMqttServerPort();
+  static bool audioNotifications = getAudioNotificationsStatus();
+  static bool visualNotifications = getVisualNotificationsStatus();
+
+  // Log preferences information to console.
+  debug(LOG, "Network Name: '%s'.", networkName);
+  debug(LOG, "Network Password: '%s'.", networkPass);
+  debug(LOG, "MQTT Server address: '%s'.", mqttServerAddress);
+  debug(LOG, "MQTT Server port: '%d'.", mqttServerPort);
+  debug(LOG, "MQTT Username: '%s'.", mqttUsername);
+  debug(LOG, "MQTT Password: '%s'.", mqttPass);
+  debug(LOG, "MQTT Client ID: '%s'.", mqttClientId);
+  debug(LOG, "MQTT Topic: '%s'.", mqttTopic);
+  debug(LOG, "Audio notifications %s.", audioNotifications ? "enabled" : "disabled");
+  debug(LOG, "Visual notifications %s.", visualNotifications ? "enabled" : "disabled");
+
+  bool isDataValid = true;
+
+  if (isEmpty(networkName) || networkName == "Unknown") {
+    isDataValid = false;
+  }
+
+  if (isEmpty(networkPass) || networkPass == "Unknown") {
+    isDataValid = false;
+  }
+
+  if (isEmpty(mqttServerAddress) || mqttServerAddress == "Unknown") {
+    isDataValid = false;
+  }
+
+  if (isEmpty(mqttUsername) || mqttUsername == "Unknown") {
+    isDataValid = false;
+  }
+
+  if (isEmpty(mqttPass) || mqttPass == "Unknown") {
+    isDataValid = false;
+  }
+
+  if (isEmpty(mqttClientId) || mqttClientId == "Unknown") {
+    isDataValid = false;
+  }
+
+  if (isEmpty(mqttTopic) || mqttTopic == "Unknown") {
+    isDataValid = false;
+  }
+
+  if (mqttServerPort == 0) {
+    isDataValid = false;
+  }
+
+  // Show debug message.
+  if (isDataValid) {
+    debug(SCS, "Preferences data is valid.");
+  } else {
+    debug(ERR, "Preferences data is not valid. Default values are not sufficient for a successful network connection.");
+  }
+
+  return isDataValid;
+}
+
+/**
+* @brief Clear all preferences within a specific namespace.
+*
+* This function clears all preferences stored within the specified namespace,
+* effectively resetting them to their default values.
+*/
+void WiFiConfig::clearPreferences() {
+  // Create a Preferences instance with the specified namespace.
+  Preferences preferences;
+
+  // Begin preferences with the specified namespace.
+  preferences.begin(_preferencesNamespace, false);
+
+  // Clear all preferences in the specified namespace.
+  preferences.clear();
+
+  // End preferences.
+  preferences.end();
+
+  // Uncomment the following line if a device restart is desired after saving preferences.
+  // ESP.restart();
+}
+
+/**
+* @brief Get the configured Wi-Fi network name.
+* 
+* @return const char* representing the Wi-Fi network name.
+*         If empty, returns "NULL".
+* 
+* @note The returned pointer is valid until the class instance is destroyed,
+*       or until the next call to a function that modifies the Wi-Fi network name.
+*/
+const char* WiFiConfig::getNetworkName() {
+  static String data = loadString(NETWORK_NAME);
+  return data.c_str();
+}
+
+/**
+* @brief Get the configured Wi-Fi network password.
+* 
+* @return const char* representing the Wi-Fi network password.
+*         If empty, returns "NULL".
+* 
+* @note The returned pointer is valid until the class instance is destroyed,
+*       or until the next call to a function that modifies the Wi-Fi network password.
+*/
+const char* WiFiConfig::getNetworkPass() {
+  static String data = loadString(NETWORK_PASS);
+  return data.c_str();
+}
+
+/**
+* @brief Get the configured MQTT server address.
+* 
+* @return const char* representing the MQTT server address.
+*         If empty, returns "NULL".
+* 
+* @note The returned pointer is valid until the class instance is destroyed,
+*       or until the next call to a function that modifies the MQTT server address.
+*/
+const char* WiFiConfig::getMqttServerAddress() {
+  static String data = loadString(MQTT_SERVER_ADDRESS);
+  return data.c_str();
+}
+
+/**
+* @brief Get the configured MQTT username.
+* 
+* @return const char* representing the MQTT username.
+*         If empty, returns "NULL".
+* 
+* @note The returned pointer is valid until the class instance is destroyed,
+*       or until the next call to a function that modifies the MQTT username.
+*/
+const char* WiFiConfig::getMqttUsername() {
+  static String data = loadString(MQTT_USERNAME);
+  return data.c_str();
+}
+
+/**
+* @brief Get the configured MQTT password.
+* 
+* @return const char* representing the MQTT password.
+*         If empty, returns "NULL".
+* 
+* @note The returned pointer is valid until the class instance is destroyed,
+*       or until the next call to a function that modifies the MQTT password.
+*/
+const char* WiFiConfig::getMqttPass() {
+  static String data = loadString(MQTT_PASS);
+  return data.c_str();
+}
+
+/**
+* @brief Get the configured MQTT client ID.
+* 
+* @return const char* representing the MQTT client ID.
+*         If empty, returns "NULL".
+* 
+* @note The returned pointer is valid until the class instance is destroyed,
+*       or until the next call to a function that modifies the MQTT client ID.
+*/
+const char* WiFiConfig::getMqttClientId() {
+  static String data = loadString(MQTT_CLIENT_ID);
+  return data.c_str();
+}
+
+/**
+* @brief Get the configured MQTT topic.
+* 
+* @return const char* representing the MQTT topic.
+*         If empty, returns "NULL".
+* 
+* @note The returned pointer is valid until the class instance is destroyed,
+*       or until the next call to a function that modifies the MQTT topic.
+*/
+const char* WiFiConfig::getMqttTopic() {
+  static String data = loadString(MQTT_TOPIC);
+  return data.c_str();
+}
+
+/**
+* @brief Get the status of audio notifications.
+* 
+* @return bool representing the status of audio notifications.
+*         Returns true if audio notifications are enabled, false otherwise.
+* 
+* @note The returned value is cached after the first call and remains the same for subsequent calls.
+*/
+bool WiFiConfig::getAudioNotificationsStatus() {
+  static bool data = loadBool(AUDIO_NOTIFICATIONS);
+  return data;
+}
+
+/**
+* @brief Get the status of visual notifications.
+* 
+* @return bool representing the status of visual notifications.
+*         Returns true if visual notifications are enabled, false otherwise.
+* 
+* @note The returned value is cached after the first call and remains the same for subsequent calls.
+*/
+bool WiFiConfig::getVisualNotificationsStatus() {
+  static bool data = loadBool(VISUAL_NOTIFICATIONS);
+  return data;
+}
+
+/**
+* @brief Get the configured MQTT server port.
+* 
+* @return uint16_t representing the MQTT server port.
+*         If not configured, returns a default value.
+* 
+* @note The returned value is cached after the first call and remains the same for subsequent calls.
+*/
+uint16_t WiFiConfig::getMqttServerPort() {
+  static uint16_t data = loadInt(MQTT_SERVER_PORT);
+  return data;
+}
+
+/**
+*
+*
+*
+* PRIVATE FUNCTIONS
+*
+*
+*
+*/
 
 /**
 * @brief Get the configured network name for SoftAP.
@@ -153,378 +647,233 @@ uint16_t WiFiConfig::getConfigServerPort() {
 }
 
 /**
-* @brief Render the configuration page for device setup.
+* @brief Scan for available Wi-Fi networks and return them in HTML option format.
 * 
-* This function serves an HTML configuration page to the connected client.
-* It processes the form submission and saves the configuration settings.
+* @return String containing the HTML option elements for each available network.
+*         If no networks are found, an empty string is returned.
 * 
-* @note The HTML structure and styling are included for presentation purposes.
+* @note The function scans for Wi-Fi networks, formats them as HTML option elements,
+*       and returns the resulting string. It also frees memory used for the scan results
+*       after processing.
 */
-void WiFiConfig::renderConfigPage() {
-  // Check if a client has connected.
-  WiFiClient client = _configServerInstance.available();
+String WiFiConfig::scanNetworks() {
+  int networksFound = WiFi.scanNetworks();
+  String networks = String();
 
-  if (!client) {
-    return;  // No client, exit the loop.
+  if (networksFound != 0) {
+    for (int i = 0; i < networksFound; ++i) {
+      String network = String(WiFi.SSID(i).c_str());
+      networks += "<option value=\"" + network + "\">" + network + "</option>";
+    }
+
+    // delay(10);
   }
 
-  // Wait until the client sends some data.
-  while (!client.available()) {
-    delay(1);
-  }
+  // Delete the scan result to free memory for code below.
+  WiFi.scanDelete();
 
-  // Read the first line of the request.
-  String request = client.readStringUntil('\r');
-  client.flush();
-
-  /**
-  * @note THIS WILL BE UPDATED IN FUTURE VERSION.
-  */
-  // Serve the HTML page.
-  String html = String();
-  html = "<!DOCTYPE html>";
-  html += "<html lang='en'>";
-  html += "<head>";
-  html += "<meta charset='UTF-8'><meta name='viewport' content='width=device-width, initial-scale=1.0, user-scalable=no'>";
-  html += "<style>";
-  html += "* { font-family: system-ui, sans-serif; font-size: 14px; line-height: 1.5; color: #202326; margin: 0; padding: 0; box-sizing: border-box; outline: none; list-style: none; word-wrap: anywhere; }";
-  html += ".no-margin { margin: 0; padding: 0; }";
-  html += "body { display: flex; flex-direction: column; flex-wrap: nowrap; align-items: center; }";
-  html += "header, section, .frame-primary, .frame-secondary, form { display: flex; flex-direction: column; gap: 20px; }";
-  html += "header { padding-bottom: 8px; }";
-  html += ".frame-secondary { gap: 4px; }";
-  html += ".frame-horizontal { gap: 20px; display: flex; flex-direction: row; justify-content: space-between; flex-wrap: wrap; }";
-  html += "form { margin: 40px 24px 120px; max-width: 440px; }";
-  html += "h1, h2, h3, h4, h5 { color: inherit; line-height: 1.15; }";
-  html += "h1 { font-size: 2.074rem; font-weight: 700; }";
-  html += "h2 { font-size: 1.44rem; font-weight: 630; margin-top: 28px; }";
-  html += "p, span, label, input[type='text'], ul, li { font-size: 1rem; line-height: 1.5; color: inherit; }";
-  html += "span { font-weight: 550; }";
-  html += "input[type='text'] { font-family: monospace, sans-serif; padding: 12px; border: none; box-shadow: 0 0 0 1px #D7DFE8; border-radius: 0px; }";
-  html += "input[type='text']:focus { box-shadow: 0 0 0 2px #0180FF; }";
-  html += "input[type='submit'] { border: none; padding: 12px 24px; background: #00CC22; border-radius: 0px; font-weight: 550; color: #FFFFFF; cursor: pointer; font-size: 1.05rem; line-height: 1.5; flex-grow: 2; }";
-  html += "input[type='reset'] { border: 1px solid #D7DFE8; padding: 12px 24px; background: none; border-radius: 0px; font-weight: 550; color: inherit; cursor: pointer; font-size: 1.05rem; line-height: 1.5; flex-grow: 1; }";
-  html += "section { border-left: 3px solid #D7DFE8; padding: 16px 20px; }";
-  html += "section.success { border-color: #00CC22; background: #F2FFF4; color: #004D0D; }";
-  html += "section.info { border-color: #0180FF; background: #F2F9FF; color: #003366; }";
-  html += "</style>";
-  html += "</head>";
-  html += "<html>";
-  html += "<body>";
-  html += "<form action='/configuration' method='get'>";
-  html += "<header>";
-  html += "<h1 class='no-margin'>🤙</h1>";
-  html += "<h1>Device<br>configuration</h1>";
-  html += "<p>Ribeye biltong salami, rump ham hock tail turducken meatball short loin meatloaf buffalo shank. Andouille venison pork chop chicken jowl kevin.</p>";
-  html += "</header>";
-
-  // Check if the request is a form submission.
-  if (request.indexOf("/configuration") != -1) {
-    _networkName = parseFieldValue(request, NETWORK_NAME);
-    _networkPass = parseFieldValue(request, NETWORK_PASS);
-    _mqttServerAddress = parseFieldValue(request, MQTT_SERVER_ADDRESS);
-    _mqttServerPort = stringToUint16(parseFieldValue(request, MQTT_SERVER_PORT));
-    _mqttUsername = parseFieldValue(request, MQTT_USERNAME);
-    _mqttPass = parseFieldValue(request, MQTT_PASS);
-    _mqttClientId = parseFieldValue(request, MQTT_CLIENT_ID);
-    _mqttTopic = parseFieldValue(request, MQTT_TOPIC);
-
-    // Save preferences.
-    savePreferences();
-
-    // Display a success message with the saved configuration.
-    html += "<section class='success'>";
-    html += "<p>Configuration successfully saved to device. Data saved in device memory is shown bellow.</p>";
-    html += "<ul>";
-    html += "<li><span>SSID Name: </span>" + _networkName + "</li>";
-    html += "<li><span>SSID Password: </span>" + _networkPass + "</li>";
-    html += "<li><span>MQTT Server: </span>" + _mqttServerAddress + "</li>";
-    html += "<li><span>MQTT Port: </span>" + String(_mqttServerPort) + "</li>";
-    html += "<li><span>MQTT Username: </span>" + _mqttUsername + "</li>";
-    html += "<li><span>MQTT Password: </span>" + _mqttPass + "</li>";
-    html += "<li><span>MQTT Client ID: </span>" + _mqttClientId + "</li>";
-    html += "<li><span>MQTT Topic: </span>" + _mqttTopic + "</li>";
-    html += "</ul>";
-    html += "<p>Device will now reboot and try to connect to the configured SSID and connection with this page will be lost.</p>";
-    html += "</section>";
-    html += "<section class='info'>";
-    html += "<p>To start the configuration again, restart the device while holding the quick config button on the development board. Keep holding the quick config button until the purple LED is lit.</p>";
-    html += "</section>";
-  }
-
-  // ... HTML form for user input ...
-  html += "<h2>WiFi router<br>configuration</h2>";
-  html += "<p>Establish and customize the wireless network name (SSID) and configure the Access Point for a secure and reliable connection.</p>";
-  html += "<div class='frame-primary'>";
-  html += "<div class='frame-secondary'><label for='" + String(NETWORK_NAME) + "'>SSID Name:</label><input id='" + String(NETWORK_NAME) + "' type='text' name='" + String(NETWORK_NAME) + "' value=\"" + _networkName + "\"></div>";  // something wrong here, not displayed if separator is in the string.
-  html += "<div class='frame-secondary'><label for='" + String(NETWORK_PASS) + "'>SSID Password:</label><input id='" + String(NETWORK_PASS) + "' type='text' name='" + String(NETWORK_PASS) + "' value='" + _networkPass + "'></div>";
-  html += "</div>";
-  html += "<h2>MQTT server<br>configuration</h2>";
-  html += "<p>Configure MQTT protocol settings, including the broker's address, port, and authentication details, to enable effective device communication.</p>";
-  html += "<div class='frame-primary'>";
-  html += "<div class='frame-secondary'><label for='" + String(MQTT_SERVER_ADDRESS) + "'>MQTT Server:</label><input id='" + String(MQTT_SERVER_ADDRESS) + "' type='text' name='" + String(MQTT_SERVER_ADDRESS) + "' value='" + _mqttServerAddress + "'></div>";
-  html += "<div class='frame-secondary'><label for='" + String(MQTT_SERVER_PORT) + "'>MQTT Port:</label><input id='" + String(MQTT_SERVER_PORT) + "' type='text' inputmode='numeric' pattern='[0-9]*' name='" + String(MQTT_SERVER_PORT) + "' value='" + String(_mqttServerPort) + "'></div>";
-  html += "<div class='frame-secondary'><label for='" + String(MQTT_USERNAME) + "'>MQTT Username:</label><input id='" + String(MQTT_USERNAME) + "' type='text' name='" + String(MQTT_USERNAME) + "' value='" + _mqttUsername + "'></div>";
-  html += "<div class='frame-secondary'><label for='" + String(MQTT_PASS) + "'>MQTT Password:</label><input id='" + String(MQTT_PASS) + "' type='text' name='" + String(MQTT_PASS) + "' value='" + _mqttPass + "'></div>";
-  html += "</div>";
-  html += "<h2>MQTT client & topic<br>configuration</h2>";
-  html += "<p>Define MQTT topic for streamlined message exchange and assign unique client IDs to device, ensuring precise and targeted communication within the MQTT network.</p>";
-  html += "<div class='frame-primary'>";
-  html += "<div class='frame-secondary'><label for='" + String(MQTT_CLIENT_ID) + "'>MQTT Client ID:</label><input id='" + String(MQTT_CLIENT_ID) + "' type='text' name='" + String(MQTT_CLIENT_ID) + "' value='" + _mqttClientId + "'></div>";
-  html += "<div class='frame-secondary'><label for='" + String(MQTT_TOPIC) + "'>MQTT Topic:</label><input id='" + String(MQTT_TOPIC) + "' type='text' name='" + String(MQTT_TOPIC) + "' value='" + _mqttTopic + "'></div>";
-  html += "</div>";
-  html += "<h2>Finish<br>configuration</h2>";
-  html += "<p>Upon pressing the \"Upload configuration\" button, the device will reset to apply the changes, temporarily disrupting the connection. This ensures a swift and efficient update of settings.</p>";
-  html += "<section class='info'><p>Fields are not mandatory, but please double-check if all data is entered. Upon uploading the new configuration, the device will not start if any essential data is missing. Ensure all required information is provided before proceeding.</p></section>";
-  html += "<div class='frame-horizontal'>";
-  html += "<input type='reset' value='Reset form'>";
-  html += "<input type='submit' value='Upload configuration'>";
-  html += "</div>";
-  html += "</form>";
-  html += "</body>";
-  html += "</html>";
-  //*/
-
-  // Send the response to the client.
-  client.println("HTTP/1.1 200 OK");
-  client.println("Content-Type: text/html");
-  client.println("Connection: close");
-  client.println();
-  client.println(html);
+  return networks;
 }
 
 /**
-* @brief Save Wi-Fi and MQTT configuration preferences.
-*
-* This method stores the current configuration parameters to non-volatile storage
-* using the Preferences library. It saves Wi-Fi network name, password, MQTT server
-* address, port, username, password, client ID, and topic for future use.
+* @brief Load a string value from the preferences storage.
+* 
+* @param key The key associated with the string value to be loaded.
+* 
+* @return String containing the value associated with the specified key.
+*         If the key does not exist, "Unknown" is stored and returned.
+*         If the loading fails, a default value is returned.
+* 
+* @note The function initializes a Preferences instance with the specified namespace,
+*       checks if the key exists, stores a default value if it does not, loads the value,
+*       and ends the preferences session. If loading fails, an error message is logged
+*       and a default value is returned.
 */
-void WiFiConfig::savePreferences() {
+String WiFiConfig::loadString(const char* key) {
   // Create a Preferences instance with the specified namespace.
   Preferences preferences;
+  static String data;
 
-  // Begin preferences with the specified namespace.
-  preferences.begin(_preferencesNamespace, false);
+  if (preferences.begin(_preferencesNamespace, READ_WRITE_MODE)) {
+    // Check if key exists and store default value if FALSE.
+    if (!preferences.isKey(key)) {
+      preferences.putString(key, "Unknown");
+    }
 
-  // Save Wi-Fi network configuration.
-  preferences.putString(NETWORK_NAME, _networkName);
-  preferences.putString(NETWORK_PASS, _networkPass);
+    // Load value from key.
+    data = preferences.getString(key);
 
-  // Save MQTT configuration.
-  preferences.putString(MQTT_SERVER_ADDRESS, _mqttServerAddress);
-  preferences.putInt(MQTT_SERVER_PORT, _mqttServerPort);
-  preferences.putString(MQTT_USERNAME, _mqttUsername);
-  preferences.putString(MQTT_PASS, _mqttPass);
-  preferences.putString(MQTT_CLIENT_ID, _mqttClientId);
-  preferences.putString(MQTT_TOPIC, _mqttTopic);
-
-  // End preferences session.
-  preferences.end();
-
-  // Uncomment the following line if a device restart is desired after saving preferences.
-  // ESP.restart();
-}
-
-/**
-* @brief Load Wi-Fi and MQTT configuration preferences.
-*
-* This method reads configuration parameters from non-volatile storage using the
-* Preferences library. It loads Wi-Fi network name, password, MQTT server address,
-* port, username, password, client ID, and topic. After loading, it checks if all
-* essential configuration parameters are non-empty and valid to determine the
-* overall configuration validity.
-*/
-void WiFiConfig::loadPreferences() {
-  // Create a Preferences instance with the specified namespace.
-  Preferences preferences;
-
-  // Begin preferences with the specified namespace.
-  preferences.begin(_preferencesNamespace, false);
-
-  // Load Wi-Fi network configuration.
-  _networkName = preferences.getString(NETWORK_NAME, String());
-  _networkPass = preferences.getString(NETWORK_PASS, String());
-
-  // Load MQTT configuration.
-  _mqttServerAddress = preferences.getString(MQTT_SERVER_ADDRESS, String());
-  _mqttServerPort = preferences.getInt(MQTT_SERVER_PORT, 0);
-  _mqttUsername = preferences.getString(MQTT_USERNAME, String());
-  _mqttPass = preferences.getString(MQTT_PASS, String());
-  _mqttClientId = preferences.getString(MQTT_CLIENT_ID, String());
-  _mqttTopic = preferences.getString(MQTT_TOPIC, String());
-
-  // End preferences session.
-  preferences.end();
-
-  // Check if all essential configuration parameters are non-empty.
-  if (_networkName.isEmpty() || _networkPass.isEmpty() || _mqttServerAddress.isEmpty() || _mqttServerPort == 0 || _mqttUsername.isEmpty() || _mqttPass.isEmpty() || _mqttClientId.isEmpty() || _mqttTopic.isEmpty()) {
-    _isConfigValid = false;
+    // End preferences session.
+    preferences.end();
   } else {
-    _isConfigValid = true;
+    // Return a default value if loading fails
+    debug(ERR, "Loading '%s' key from '%s' namespace failed. Will use default value.", key, _preferencesNamespace);
   }
+
+  return data.c_str();
 }
 
 /**
-* @brief Clear all preferences within a specific namespace.
-*
-* This function clears all preferences stored within the specified namespace,
-* effectively resetting them to their default values.
+* @brief Save a string value to the specified key in the preferences namespace.
+* 
+* @param key The key to which the string value will be saved.
+* @param value The string value to save.
+* 
+* @note This function creates a Preferences instance, attempts to save the value associated 
+*       with the given key, and ensures the Preferences session is properly ended. If saving 
+*       fails, an error message is logged.
 */
-void WiFiConfig::clearPreferences() {
+void WiFiConfig::saveString(const char* key, String value) {
   // Create a Preferences instance with the specified namespace.
   Preferences preferences;
 
-  // Begin preferences with the specified namespace.
-  preferences.begin(_preferencesNamespace, false);
+  if (preferences.begin(_preferencesNamespace, READ_WRITE_MODE)) {
+    // Save the value to the specified key.
+    preferences.putString(key, value);
 
-  // Clear all preferences in the specified namespace.
-  preferences.clear();
+    // End preferences session.
+    preferences.end();
 
-  // End preferences.
-  preferences.end();
-
-  // Uncomment the following line if a device restart is desired after saving preferences.
-  // ESP.restart();
+    // Show success message.
+    debug(SCS, "Data saved to '%s' key in '%s' namespace.", key, _preferencesNamespace);
+  } else {
+    // Log an error message if saving fails.
+    debug(ERR, "Saving data to '%s' key in '%s' namespace failed.", key, _preferencesNamespace);
+  }
 }
 
 /**
-* @brief Check if the Wi-Fi configuration is valid.
-*
-* @return True if the configuration is valid, false otherwise.
-*
-* @see loadPreferences()
+* @brief Load an integer value from the specified key in the preferences namespace.
+* 
+* @param key The key for the integer value to load.
+* 
+* @return uint16_t containing the value associated with the key.
+*         If the key does not exist, initializes it with a default value of 0 and returns 0.
+*         If loading fails, returns 0.
+* 
+* @note This function creates a Preferences instance, attempts to load the value associated 
+*       with the given key, and ensures the Preferences session is properly ended. If the key 
+*       does not exist, it initializes the key with a default value of 0.
 */
-bool WiFiConfig::isConfigValid() {
-  return _isConfigValid;
-}
+uint16_t WiFiConfig::loadInt(const char* key) {
+  // Create a Preferences instance with the specified namespace.
+  Preferences preferences;
+  static int data;
 
-/**
-* @brief Get the configured Wi-Fi network name.
-* 
-* @return const char* representing the Wi-Fi network name.
-*         If empty, returns "NULL".
-* 
-* @note The returned pointer is valid until the class instance is destroyed,
-*       or until the next call to a function that modifies the Wi-Fi network name.
-*/
-const char* WiFiConfig::getNetworkName() {
-  if (_networkName.isEmpty()) {
-    return "NULL";
+  if (preferences.begin(_preferencesNamespace, READ_WRITE_MODE)) {
+    // Check if key exists and store default value if FALSE.
+    if (preferences.isKey(key) == false) {
+      preferences.putInt(key, 0);
+    }
+
+    // Load value from key.
+    data = preferences.getInt(key);
+
+    // End preferences session.
+    preferences.end();
+  } else {
+    // Log an error message and return a default value if loading fails.
+    debug(ERR, "Loading '%s' key from '%s' namespace failed. Will use default value.", key, _preferencesNamespace);
+    data = 0;
   }
 
-  return _networkName.c_str();
+  return data;
 }
 
 /**
-* @brief Get the configured Wi-Fi network password.
+* @brief Save an integer value to the specified key in the preferences namespace.
 * 
-* @return const char* representing the Wi-Fi network password.
-*         If empty, returns "NULL".
+* @param key The key to which the integer value will be saved.
+* @param value The integer value to save.
 * 
-* @note The returned pointer is valid until the class instance is destroyed,
-*       or until the next call to a function that modifies the Wi-Fi network password.
+* @note This function creates a Preferences instance, attempts to save the value associated 
+*       with the given key, and ensures the Preferences session is properly ended. If saving 
+*       fails, an error message is logged.
 */
-const char* WiFiConfig::getNetworkPass() {
-  if (_networkPass.isEmpty()) {
-    return "NULL";
+void WiFiConfig::saveInt(const char* key, uint16_t value) {
+  // Create a Preferences instance with the specified namespace.
+  Preferences preferences;
+
+  if (preferences.begin(_preferencesNamespace, READ_WRITE_MODE)) {
+    // Save the value to the specified key.
+    preferences.putInt(key, value);
+
+    // End preferences session.
+    preferences.end();
+
+    // Show success message.
+    debug(SCS, "Data saved to '%s' key in '%s' namespace.", key, _preferencesNamespace);
+  } else {
+    // Log an error message if saving fails.
+    debug(ERR, "Saving data to '%s' key in '%s' namespace failed.", key, _preferencesNamespace);
+  }
+}
+
+/**
+* @brief Load a boolean value from the specified key in the preferences namespace.
+* 
+* @param key The key for the boolean value to load.
+* 
+* @return bool containing the value associated with the key.
+*         If the key does not exist, initializes it with a default value of true and returns true.
+*         If loading fails, returns false.
+* 
+* @note This function creates a Preferences instance, attempts to load the value associated 
+*       with the given key, and ensures the Preferences session is properly ended. If the key 
+*       does not exist, it initializes the key with a default value of true.
+*/
+bool WiFiConfig::loadBool(const char* key) {
+  // Create a Preferences instance with the specified namespace.
+  Preferences preferences;
+  static bool data;
+
+  if (preferences.begin(_preferencesNamespace, READ_WRITE_MODE)) {
+    // Check if key exists and store default value if FALSE.
+    if (preferences.isKey(key) == false) {
+      preferences.putBool(key, true);
+    }
+
+    // Load value from key.
+    data = preferences.getBool(key);
+
+    // End preferences session.
+    preferences.end();
+  } else {
+    // Log an error message and return a default value if loading fails.
+    debug(ERR, "Loading '%s' key from '%s' namespace failed. Will use default value.", key, _preferencesNamespace);
+    data = false;
   }
 
-  return _networkPass.c_str();
+  return data;
 }
 
 /**
-* @brief Get the configured MQTT server address.
+* @brief Save a boolean value to the specified key in the preferences namespace.
 * 
-* @return const char* representing the MQTT server address.
-*         If empty, returns "NULL".
+* @param key The key to which the boolean value will be saved.
+* @param value The boolean value to save.
 * 
-* @note The returned pointer is valid until the class instance is destroyed,
-*       or until the next call to a function that modifies the MQTT server address.
+* @note This function creates a Preferences instance, attempts to save the value associated 
+*       with the given key, and ensures the Preferences session is properly ended. If saving 
+*       fails, an error message is logged.
 */
-const char* WiFiConfig::getMqttServerAddress() {
-  if (_mqttServerAddress.isEmpty()) {
-    return "NULL";
+void WiFiConfig::saveBool(const char* key, bool value) {
+  // Create a Preferences instance with the specified namespace.
+  Preferences preferences;
+
+  if (preferences.begin(_preferencesNamespace, READ_WRITE_MODE)) {
+    // Save the value to the specified key.
+    preferences.putBool(key, value);
+
+    // End preferences session.
+    preferences.end();
+
+    // Show success message.
+    debug(SCS, "Data saved to '%s' key in '%s' namespace.", key, _preferencesNamespace);
+  } else {
+    // Log an error message if saving fails.
+    debug(ERR, "Saving data to '%s' key in '%s' namespace failed.", key, _preferencesNamespace);
   }
-
-  return _mqttServerAddress.c_str();
-}
-
-/**
-* @brief Get the configured MQTT username.
-* 
-* @return const char* representing the MQTT username.
-*         If empty, returns "NULL".
-* 
-* @note The returned pointer is valid until the class instance is destroyed,
-*       or until the next call to a function that modifies the MQTT username.
-*/
-const char* WiFiConfig::getMqttUsername() {
-  if (_mqttUsername.isEmpty()) {
-    return "NULL";
-  }
-
-  return _mqttUsername.c_str();
-}
-
-/**
-* @brief Get the configured MQTT password.
-* 
-* @return const char* representing the MQTT password.
-*         If empty, returns "NULL".
-* 
-* @note The returned pointer is valid until the class instance is destroyed,
-*       or until the next call to a function that modifies the MQTT password.
-*/
-const char* WiFiConfig::getMqttPass() {
-  if (_mqttPass.isEmpty()) {
-    return "NULL";
-  }
-
-  return _mqttPass.c_str();
-}
-
-/**
-* @brief Get the configured MQTT client ID.
-* 
-* @return const char* representing the MQTT client ID.
-*         If empty, returns "NULL".
-* 
-* @note The returned pointer is valid until the class instance is destroyed,
-*       or until the next call to a function that modifies the MQTT client ID.
-*/
-const char* WiFiConfig::getMqttClientId() {
-  if (_mqttClientId.isEmpty()) {
-    return "NULL";
-  }
-
-  return _mqttClientId.c_str();
-}
-
-/**
-* @brief Get the configured MQTT topic.
-* 
-* @return const char* representing the MQTT topic.
-*         If empty, returns "NULL".
-* 
-* @note The returned pointer is valid until the class instance is destroyed,
-*       or until the next call to a function that modifies the MQTT topic.
-*/
-const char* WiFiConfig::getMqttTopic() {
-  if (_mqttTopic.isEmpty()) {
-    return "NULL";
-  }
-
-  return _mqttTopic.c_str();
-}
-
-/**
-* @brief Get the MQTT server port.
-*
-* @return The MQTT server port.
-*/
-uint16_t WiFiConfig::getMqttServerPort() {
-  return _mqttServerPort;
 }
 
 /**
@@ -545,18 +894,32 @@ uint16_t WiFiConfig::getMqttServerPort() {
 */
 String WiFiConfig::parseFieldValue(String data, String fieldId) {
   // Find the index of the specified field ID in the data String.
-  int index = data.indexOf(fieldId) + fieldId.length() + 1;
+  int startIndex = data.indexOf(fieldId + "=");
+
+  // If the field ID is not found, return an empty String.
+  if (startIndex == -1) {
+    return String();
+  }
+
+  // Adjust the startIndex to the position of the value after '='
+  startIndex += fieldId.length() + 1;
   String value = String();
 
   // Find the indices of the next ampersand (&) and " HTTP" in the data String.
-  int ampIndex = data.indexOf("&", index);
-  int httpIndex = data.indexOf(" HTTP", index);
+  int ampIndex = data.indexOf("&", startIndex);
+  int httpIndex = data.indexOf(" HTTP", startIndex);
 
   // Determine the end index based on the minimum of ampIndex and httpIndex, or the end of the data String.
-  int endIndex = min(static_cast<int>(ampIndex != -1 ? ampIndex : httpIndex), static_cast<int>(data.length()));
+  int endIndex = data.length();
+
+  if (ampIndex != -1 && (ampIndex < httpIndex || httpIndex == -1)) {
+    endIndex = ampIndex;
+  } else if (httpIndex != -1) {
+    endIndex = httpIndex;
+  }
 
   // Extract the value substring based on the determined indices.
-  value = data.substring(index, endIndex);
+  value = data.substring(startIndex, endIndex);
 
   // Return an empty String if the extracted value is empty, otherwise, URL-decode and remove spaces.
   return value.isEmpty() ? String() : removeSpaces(decodeResponse(value));
